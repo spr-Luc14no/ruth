@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-ink-50 text-ink-900 font-sans;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+
+  /* Tipografia: serif distintiva para títulos */
+  .display {
+    @apply font-display tracking-tightest;
+    font-feature-settings: 'liga', 'dlig';
+  }
+
+  /* Foco visível e elegante */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-ink-900 ring-offset-2 ring-offset-ink-50;
+  }
+}
+
+@layer components {
+  /* Textura sutil de papel — referência ao caderno de chamada */
+  .paper-texture {
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(28, 25, 23, 0.06) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+
+  /* Linha de caderneta vertical — divisor entre seções */
+  .rule-vertical {
+    @apply relative;
+  }
+  .rule-vertical::before {
+    content: '';
+    @apply absolute top-0 bottom-0 left-0 w-px bg-ink-200;
+  }
+
+  /* Numeração editorial — section numbers em pequeno caps mono */
+  .section-number {
+    @apply font-mono text-[10px] uppercase tracking-[0.2em] text-ink-500;
+  }
+}
