@@ -2,14 +2,17 @@ import { Router } from 'express';
 import authRoutes from './auth.routes';
 import usuariosRoutes from './usuarios.routes';
 import turmasRoutes from './turmas.routes';
+import sessoesRoutes from './sessoes.routes';
+import perguntasRoutes from './perguntas.routes';
 
 const router = Router();
 
 router.use('/auth', authRoutes);
 router.use('/usuarios', usuariosRoutes);
 router.use('/turmas', turmasRoutes);
+router.use('/sessoes', sessoesRoutes);
+router.use('/perguntas', perguntasRoutes);
 
-// Health check
 router.get('/health', (_req, res) => {
   res.json({ success: true, data: { status: 'ok', timestamp: new Date().toISOString() } });
 });
