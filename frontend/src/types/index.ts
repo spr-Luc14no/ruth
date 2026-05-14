@@ -2,6 +2,7 @@
 // Mantido manualmente em sincronia com backend/src/types
 
 export type Perfil = 'A' | 'P' | 'U';
+export type StatusUsuario = 'A' | 'B';
 
 export const PERFIL_LABELS: Record<Perfil, string> = {
   A: 'Administrador',
@@ -15,6 +16,9 @@ export interface Usuario {
   email: string;
   login: string;
   tipo: Perfil;
+  status?: StatusUsuario;
+  matricula?: string | null;
+  criadoEm?: string;
 }
 
 export interface LoginResponse {
@@ -22,7 +26,38 @@ export interface LoginResponse {
   usuario: Usuario;
 }
 
-// Padrão de resposta da API
+// ============ Turmas ============
+
+export interface TurmaResumo {
+  id: number;
+  nome: string;
+  periodo: string;
+  disciplina: string;
+  professorId: number;
+  professor: { id: number; nome: string; email?: string };
+  _count: { matriculas: number; sessoes: number };
+}
+
+export interface AlunoMatriculado {
+  id: number;
+  nome: string;
+  email: string;
+  matricula: string | null;
+  status: StatusUsuario;
+}
+
+export interface MatriculaItem {
+  alunoId: number;
+  turmaId: number;
+  aluno: AlunoMatriculado;
+}
+
+export interface TurmaDetalhe extends TurmaResumo {
+  matriculas: MatriculaItem[];
+}
+
+// ============ Padrão de resposta da API ============
+
 export interface ApiSuccess<T> {
   success: true;
   data: T;
