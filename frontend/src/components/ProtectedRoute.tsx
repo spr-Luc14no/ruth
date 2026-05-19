@@ -15,8 +15,8 @@ export function ProtectedRoute({ children, perfis }: ProtectedRouteProps) {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-ink-50">
-        <div className="font-display text-3xl italic text-ink-400">aguarde…</div>
+      <div className="flex h-screen items-center justify-center bg-bg-base">
+        <div className="font-display text-2xl text-fg-muted">aguarde…</div>
       </div>
     );
   }

@@ -102,9 +102,9 @@ export default function SessaoAluno() {
 
   if (loading || !sessao) {
     return (
-      <div className="min-h-screen bg-ink-50">
+      <div className="min-h-screen bg-bg-base">
         <DashboardHeader />
-        <div className="flex h-64 items-center justify-center text-sm text-ink-500">Carregando…</div>
+        <div className="flex h-64 items-center justify-center text-sm text-bg-base0">Carregando…</div>
       </div>
     );
   }
@@ -113,14 +113,14 @@ export default function SessaoAluno() {
   const minhaPresenca = sessao.presencas.find((p) => p.aluno.id === user?.id);
 
   return (
-    <div className="min-h-screen bg-ink-50">
+    <div className="min-h-screen bg-bg-base">
       <DashboardHeader />
 
       <main className="mx-auto max-w-2xl px-6 py-10">
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="mb-6 inline-flex items-center gap-2 text-sm text-ink-600 hover:text-ink-900"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-fg-secondary hover:text-fg-primary"
         >
           <ArrowLeft size={14} />
           Painel
@@ -129,8 +129,8 @@ export default function SessaoAluno() {
         {/* Header */}
         <header className="mb-8 animate-slide-up">
           <p className="section-number mb-3">sessão · {sessao.codigo}</p>
-          <h1 className="display text-4xl tracking-tightest text-ink-900">{sessao.turma.nome}</h1>
-          <p className="mt-1 text-sm text-ink-600">{sessao.turma.disciplina}</p>
+          <h1 className="display text-4xl tracking-tightest text-fg-primary">{sessao.turma.nome}</h1>
+          <p className="mt-1 text-sm text-fg-secondary">{sessao.turma.disciplina}</p>
         </header>
 
         {/* Status da presença */}
@@ -138,17 +138,17 @@ export default function SessaoAluno() {
           className={cn(
             'mb-6 flex items-center gap-3 rounded-sm border p-4',
             minhaPresenca?.status === 'CONFIRMADO'
-              ? 'border-stamp-100 bg-stamp-50'
-              : 'border-ink-200 bg-ink-100',
+              ? 'border-primary-500/30 bg-primary-500/15'
+              : 'border-border bg-bg-subtle',
           )}
         >
           {minhaPresenca?.status === 'CONFIRMADO' ? (
-            <CheckCircle2 size={20} className="shrink-0 text-stamp-600" />
+            <CheckCircle2 size={20} className="shrink-0 text-primary-400" />
           ) : (
-            <Clock size={20} className="shrink-0 text-ink-500" />
+            <Clock size={20} className="shrink-0 text-bg-base0" />
           )}
           <div className="flex-1">
-            <p className="text-sm font-medium text-ink-900">
+            <p className="text-sm font-medium text-fg-primary">
               {minhaPresenca
                 ? minhaPresenca.status === 'CONFIRMADO'
                   ? 'Presença confirmada'
@@ -156,7 +156,7 @@ export default function SessaoAluno() {
                 : 'Presença pendente'}
             </p>
             {minhaPresenca && minhaPresenca.atrasoMin > 0 && (
-              <p className="text-xs text-ink-600">
+              <p className="text-xs text-fg-secondary">
                 Registrada com {minhaPresenca.atrasoMin} min de atraso.
               </p>
             )}
@@ -166,13 +166,13 @@ export default function SessaoAluno() {
 
         {/* Pergunta ativa */}
         {perguntaAtiva && !isEncerrada ? (
-          <section className="animate-slide-up rounded-sm border-2 border-ink-900 bg-ink-50 p-6">
+          <section className="animate-slide-up rounded-sm border-2 border-primary-500 bg-bg-base p-6">
             <div className="mb-5">
               <p className="section-number mb-2 flex items-center gap-1.5">
                 <Sparkles size={11} />
                 pergunta do professor
               </p>
-              <h2 className="display text-2xl tracking-tightest text-ink-900">
+              <h2 className="display text-2xl tracking-tightest text-fg-primary">
                 {perguntaAtiva.enunciado}
               </h2>
             </div>
@@ -182,8 +182,8 @@ export default function SessaoAluno() {
                 className={cn(
                   'rounded-sm border p-4 text-center',
                   jaRespondeu
-                    ? 'border-stamp-100 bg-stamp-50 text-stamp-700'
-                    : 'border-ink-200 bg-ink-100 text-ink-700',
+                    ? 'border-primary-500/30 bg-primary-500/15 text-primary-300'
+                    : 'border-border bg-bg-subtle text-fg-primary',
                 )}
               >
                 <p className="text-sm font-medium">
@@ -206,14 +206,14 @@ export default function SessaoAluno() {
                           className={cn(
                             'flex w-full items-center gap-3 rounded-sm border-2 px-4 py-3 text-left transition-colors',
                             selected
-                              ? 'border-ink-900 bg-ink-900 text-ink-50'
-                              : 'border-ink-200 bg-ink-50 text-ink-900 hover:border-ink-700',
+                              ? 'border-primary-500 bg-primary-500 text-bg-base'
+                              : 'border-border bg-bg-base text-fg-primary hover:border-primary-500/40',
                           )}
                         >
                           <span
                             className={cn(
                               'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 font-mono text-[10px]',
-                              selected ? 'border-ink-50 bg-ink-50 text-ink-900' : 'border-ink-300',
+                              selected ? 'border-text-primary bg-bg-base text-fg-primary' : 'border-border-strong',
                             )}
                           >
                             {selected ? <Check size={12} /> : String.fromCharCode(65 + i)}
@@ -238,18 +238,18 @@ export default function SessaoAluno() {
             )}
           </section>
         ) : !isEncerrada ? (
-          <section className="rounded-sm border border-dashed border-ink-300 bg-ink-100/30 px-6 py-12 text-center">
+          <section className="rounded-sm border border-dashed border-border-strong bg-bg-subtle/30 px-6 py-12 text-center">
             <p className="section-number mb-3">aguardando</p>
-            <p className="display text-2xl text-ink-500">Sem perguntas ativas</p>
-            <p className="mt-2 text-sm text-ink-600">
+            <p className="display text-2xl text-bg-base0">Sem perguntas ativas</p>
+            <p className="mt-2 text-sm text-fg-secondary">
               Fique nesta tela. Quando o professor disparar uma pergunta, ela aparecerá aqui
               automaticamente.
             </p>
           </section>
         ) : (
-          <section className="rounded-sm border border-ink-200 bg-ink-50 px-6 py-12 text-center">
-            <p className="display text-2xl text-ink-700">Sessão encerrada</p>
-            <p className="mt-2 text-sm text-ink-600">
+          <section className="rounded-sm border border-border bg-bg-base px-6 py-12 text-center">
+            <p className="display text-2xl text-fg-primary">Sessão encerrada</p>
+            <p className="mt-2 text-sm text-fg-secondary">
               Sua presença foi registrada. Você pode voltar ao painel.
             </p>
             <Button onClick={() => navigate('/')} className="mt-4">

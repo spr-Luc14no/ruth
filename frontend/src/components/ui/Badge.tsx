@@ -1,30 +1,31 @@
-import type { ReactNode } from 'react';
+import { HTMLAttributes } from 'react';
 import { cn } from '@/lib/cn';
 
-type Variant = 'neutral' | 'success' | 'warning' | 'danger' | 'stamp';
+type BadgeVariant = 'primary' | 'accent' | 'success' | 'warning' | 'danger' | 'neutral' | 'stamp';
 
-interface BadgeProps {
-  children: ReactNode;
-  variant?: Variant;
-  className?: string;
+interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
+  variant?: BadgeVariant;
 }
 
-const variantClasses: Record<Variant, string> = {
-  neutral: 'bg-ink-100 text-ink-700 border-ink-200',
-  success: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-  warning: 'bg-amber-50 text-amber-800 border-amber-200',
-  danger: 'bg-red-50 text-red-800 border-red-200',
-  stamp: 'bg-stamp-50 text-stamp-700 border-stamp-100',
+const variantClasses: Record<BadgeVariant, string> = {
+  primary: 'bg-primary-500/15 text-primary-300 border border-primary-500/30',
+  accent: 'bg-accent-500/15 text-accent-400 border border-accent-500/30',
+  success: 'bg-success-500/15 text-success-400 border border-success-500/30',
+  warning: 'bg-warning-500/15 text-warning-400 border border-warning-500/30',
+  danger: 'bg-accent-500/20 text-accent-400 border border-accent-500/40',
+  neutral: 'bg-bg-hover text-fg-secondary border border-border',
+  stamp: 'bg-primary-500/15 text-primary-300 border border-primary-500/30',
 };
 
-export function Badge({ children, variant = 'neutral', className }: BadgeProps) {
+export function Badge({ variant = 'neutral', className, children, ...rest }: BadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-sm border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider',
+        'inline-flex items-center gap-1 rounded-sm px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-widest',
         variantClasses[variant],
         className,
       )}
+      {...rest}
     >
       {children}
     </span>

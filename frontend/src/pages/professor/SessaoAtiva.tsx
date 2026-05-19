@@ -127,9 +127,9 @@ export default function SessaoAtiva() {
 
   if (loading || !sessao) {
     return (
-      <div className="min-h-screen bg-ink-50">
+      <div className="min-h-screen bg-bg-base">
         <DashboardHeader />
-        <div className="flex h-64 items-center justify-center text-sm text-ink-500">Carregando…</div>
+        <div className="flex h-64 items-center justify-center text-sm text-bg-base0">Carregando…</div>
       </div>
     );
   }
@@ -140,14 +140,14 @@ export default function SessaoAtiva() {
   const isEncerrada = sessao.status !== 'ABERTA';
 
   return (
-    <div className="min-h-screen bg-ink-50">
+    <div className="min-h-screen bg-bg-base">
       <DashboardHeader />
 
       <main className="mx-auto max-w-6xl px-6 py-10">
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="mb-6 inline-flex items-center gap-2 text-sm text-ink-600 hover:text-ink-900"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-fg-secondary hover:text-fg-primary"
         >
           <ArrowLeft size={14} />
           Voltar
@@ -157,8 +157,8 @@ export default function SessaoAtiva() {
         <header className="mb-10 flex flex-wrap items-end justify-between gap-4 animate-slide-up">
           <div>
             <p className="section-number mb-3">sessão #{sessao.id} · ao vivo</p>
-            <h1 className="display text-5xl tracking-tightest text-ink-900">{sessao.turma.nome}</h1>
-            <p className="mt-1 text-sm text-ink-600">{sessao.turma.disciplina}</p>
+            <h1 className="display text-5xl tracking-tightest text-fg-primary">{sessao.turma.nome}</h1>
+            <p className="mt-1 text-sm text-fg-secondary">{sessao.turma.disciplina}</p>
           </div>
           <div className="flex gap-2">
             {!isEncerrada && (
@@ -170,7 +170,7 @@ export default function SessaoAtiva() {
             {!isEncerrada ? (
               <Button
                 onClick={() => setConfirmEncerrar(true)}
-                className="!bg-red-700 hover:!bg-red-800"
+                className="!bg-accent-700 hover:!bg-accent-600"
               >
                 <PowerOff size={16} />
                 Encerrar sessão
@@ -185,17 +185,17 @@ export default function SessaoAtiva() {
           {/* COLUNA ESQUERDA */}
           <div className="space-y-8">
             {/* Código gigante */}
-            <section className="rounded-sm border border-ink-200 bg-ink-50 px-6 py-10">
+            <section className="rounded-sm border border-border bg-bg-base px-6 py-10">
               <CodigoSessaoDisplay codigo={sessao.codigo} />
             </section>
 
             {/* Pergunta ativa + resultados ao vivo */}
             {resultadosAtivos && (
-              <section className="animate-slide-up rounded-sm border-2 border-ink-900 bg-ink-50 p-6">
+              <section className="animate-slide-up rounded-sm border-2 border-primary-500 bg-bg-base p-6">
                 <div className="mb-4 flex items-start justify-between gap-4">
                   <div>
                     <p className="section-number mb-2">pergunta ao vivo</p>
-                    <h2 className="display text-2xl tracking-tightest text-ink-900">
+                    <h2 className="display text-2xl tracking-tightest text-fg-primary">
                       {resultadosAtivos.enunciado}
                     </h2>
                   </div>
@@ -219,10 +219,10 @@ export default function SessaoAtiva() {
                     .map((p) => (
                       <li
                         key={p.id}
-                        className="flex items-center justify-between rounded-sm border border-ink-200 bg-ink-50 px-4 py-3"
+                        className="flex items-center justify-between rounded-sm border border-border bg-bg-base px-4 py-3"
                       >
-                        <p className="truncate text-sm text-ink-800">{p.enunciado}</p>
-                        <span className="font-mono text-xs tabular-nums text-ink-500">
+                        <p className="truncate text-sm text-fg-primary">{p.enunciado}</p>
+                        <span className="font-mono text-xs tabular-nums text-bg-base0">
                           {p._count.respostas} resp.
                         </span>
                       </li>
@@ -234,65 +234,65 @@ export default function SessaoAtiva() {
 
           {/* COLUNA DIREITA — Presenças */}
           <aside className="space-y-4">
-            <div className="grid grid-cols-3 gap-px overflow-hidden rounded-sm bg-ink-200">
-              <div className="bg-ink-50 p-4 text-center">
+            <div className="grid grid-cols-3 gap-px overflow-hidden rounded-sm bg-border">
+              <div className="bg-bg-base p-4 text-center">
                 <p className="section-number">presentes</p>
-                <p className="display mt-1 text-3xl tabular-nums text-stamp-700">
+                <p className="display mt-1 text-3xl tabular-nums text-primary-300">
                   {totalPresentes}
                 </p>
               </div>
-              <div className="bg-ink-50 p-4 text-center">
+              <div className="bg-bg-base p-4 text-center">
                 <p className="section-number">tolerância</p>
-                <p className="display mt-1 text-3xl tabular-nums text-ink-600">{totalPendentes}</p>
+                <p className="display mt-1 text-3xl tabular-nums text-fg-secondary">{totalPendentes}</p>
               </div>
-              <div className="bg-ink-50 p-4 text-center">
+              <div className="bg-bg-base p-4 text-center">
                 <p className="section-number">total</p>
-                <p className="display mt-1 text-3xl tabular-nums text-ink-900">
+                <p className="display mt-1 text-3xl tabular-nums text-fg-primary">
                   {totalMatriculados}
                 </p>
               </div>
             </div>
 
-            <div className="rounded-sm border border-ink-200 bg-ink-50">
-              <div className="flex items-center justify-between border-b border-ink-200 px-4 py-3">
+            <div className="rounded-sm border border-border bg-bg-base">
+              <div className="flex items-center justify-between border-b border-border px-4 py-3">
                 <p className="section-number flex items-center gap-2">
                   <Users size={12} />
                   presenças
                 </p>
-                <span className="font-mono text-[10px] tabular-nums text-ink-500">
+                <span className="font-mono text-[10px] tabular-nums text-bg-base0">
                   {sessao.presencas.length} / {totalMatriculados}
                 </span>
               </div>
               {sessao.presencas.length === 0 ? (
-                <div className="px-4 py-8 text-center text-sm text-ink-500">
+                <div className="px-4 py-8 text-center text-sm text-bg-base0">
                   Aguardando primeiro check-in…
                 </div>
               ) : (
-                <ul className="divide-y divide-ink-100">
+                <ul className="divide-y divide-border-subtle">
                   {sessao.presencas.map((p, i) => (
                     <li
                       key={p.id}
                       className="flex items-center justify-between gap-3 px-4 py-3 animate-fade-in"
                     >
                       <div className="flex min-w-0 items-center gap-3">
-                        <span className="font-mono text-[10px] tabular-nums text-ink-400">
+                        <span className="font-mono text-[10px] tabular-nums text-fg-muted">
                           {String(i + 1).padStart(2, '0')}
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-ink-900">
+                          <p className="truncate text-sm font-medium text-fg-primary">
                             {p.aluno.nome}
                           </p>
                           {p.aluno.matricula && (
-                            <p className="font-mono text-[11px] text-ink-500">
+                            <p className="font-mono text-[11px] text-bg-base0">
                               mat. {p.aluno.matricula}
                             </p>
                           )}
                         </div>
                       </div>
                       {p.status === 'CONFIRMADO' ? (
-                        <CheckCircle2 size={16} className="shrink-0 text-stamp-600" />
+                        <CheckCircle2 size={16} className="shrink-0 text-primary-400" />
                       ) : (
-                        <Clock size={16} className="shrink-0 text-ink-400" />
+                        <Clock size={16} className="shrink-0 text-fg-muted" />
                       )}
                     </li>
                   ))}

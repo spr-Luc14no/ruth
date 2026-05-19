@@ -1,77 +1,67 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Plus, Search, Pencil, Ban, RotateCcw, UserCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Plus, Search, Edit, Lock, Unlock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AdminShell } from '@/components/AdminShell';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Table, type Column } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
+import { Table } from '@/components/ui/Table';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
-import {
-  usuariosApi,
-  extractErrorMessage,
-  type CriarUsuarioPayload,
-  type AtualizarUsuarioPayload,
-} from '@/services/api';
-import { PERFIL_LABELS, type Perfil, type StatusUsuario, type Usuario } from '@/types';
+import { usuariosApi, extractErrorMessage } from '@/services/api';
+import { PERFIL_LABELS, type Usuario, type Perfil, type StatusUsuario } from '@/types';
 
-const tipoOptions = [
-  { value: '', label: 'Todos os tipos' },
-  { value: 'A', label: 'Administrador' },
-  { value: 'P', label: 'Professor' },
-  { value: 'U', label: 'Aluno' },
-];
+interface UsuarioFormState {
+  open: boolean;
+  modo: 'criar' | 'editar';
+  usuario: Usuario | null;
+  nome: string;
+  email: string;
+  login: string;
+  senha: string;
+  tipo: Perfil;
+  matricula: string;
+}
 
-const statusOptions = [
-  { value: '', label: 'Todos' },
-  { value: 'A', label: 'Ativos' },
-  { value: 'B', label: 'Bloqueados' },
-];
-
-const tipoFormOptions = [
-  { value: 'P', label: 'Professor' },
-  { value: 'U', label: 'Aluno' },
-  { value: 'A', label: 'Administrador' },
-];
+const initialForm: Omit<UsuarioFormState, 'modo' | 'usuario' | 'open'> = {
+  nome: '',
+  email: '',
+  login: '',
+  senha: '',
+  tipo: 'U',
+  matricula: '',
+};
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Filtros
   const [filtroTipo, setFiltroTipo] = useState<Perfil | ''>('');
   const [filtroStatus, setFiltroStatus] = useState<StatusUsuario | ''>('');
   const [busca, setBusca] = useState('');
-  const [debouncedBusca, setDebouncedBusca] = useState('');
 
-  // Modal de criação/edição
-  const [formOpen, setFormOpen] = useState(false);
-  const [editando, setEditando] = useState<Usuario | null>(null);
+  const [form, setForm] = useState<UsuarioFormState>({
+    open: false,
+    modo: 'criar',
+    usuario: null,
+    ...initialForm,
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  // Confirmações de bloqueio/reativação
-  const [confirm, setConfirm] = useState<{ user: Usuario; action: 'bloquear' | 'reativar' } | null>(
-    null,
-  );
-  const [actionLoading, setActionLoading] = useState(false);
-
-  // Debounce da busca (300ms)
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedBusca(busca), 300);
-    return () => clearTimeout(t);
-  }, [busca]);
+  const [bloqueando, setBloqueando] = useState<Usuario | null>(null);
+  const [acaoLoading, setAcaoLoading] = useState(false);
 
   async function carregar() {
     setLoading(true);
     try {
-      const data = await usuariosApi.listar({
+      const lista = await usuariosApi.listar({
         tipo: filtroTipo || undefined,
         status: filtroStatus || undefined,
-        busca: debouncedBusca || undefined,
+        busca: busca || undefined,
       });
-      setUsuarios(data);
+      setUsuarios(lista);
     } catch (err) {
       toast.error(extractErrorMessage(err));
     } finally {
@@ -80,391 +70,312 @@ export default function Usuarios() {
   }
 
   useEffect(() => {
-    carregar();
+    const timer = setTimeout(carregar, busca ? 300 : 0);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtroTipo, filtroStatus, debouncedBusca]);
+  }, [filtroTipo, filtroStatus, busca]);
 
   function abrirCriar() {
-    setEditando(null);
-    setFormOpen(true);
+    setForm({ open: true, modo: 'criar', usuario: null, ...initialForm });
+    setFormError(null);
   }
 
   function abrirEditar(u: Usuario) {
-    setEditando(u);
-    setFormOpen(true);
+    setForm({
+      open: true,
+      modo: 'editar',
+      usuario: u,
+      nome: u.nome,
+      email: u.email,
+      login: u.login,
+      senha: '',
+      tipo: u.tipo,
+      matricula: u.matricula ?? '',
+    });
+    setFormError(null);
   }
 
-  async function executarConfirmacao() {
-    if (!confirm) return;
-    setActionLoading(true);
-    try {
-      if (confirm.action === 'bloquear') {
-        await usuariosApi.bloquear(confirm.user.id);
-        toast.success('Usuário bloqueado.');
-      } else {
-        await usuariosApi.reativar(confirm.user.id);
-        toast.success('Usuário reativado.');
-      }
-      setConfirm(null);
-      carregar();
-    } catch (err) {
-      toast.error(extractErrorMessage(err));
-    } finally {
-      setActionLoading(false);
-    }
+  function fecharForm() {
+    setForm((s) => ({ ...s, open: false }));
   }
 
-  const columns: Column<Usuario>[] = useMemo(
-    () => [
-      {
-        header: 'Nome',
-        cell: (u) => (
-          <div>
-            <p className="font-medium text-ink-900">{u.nome}</p>
-            {u.matricula && (
-              <p className="font-mono text-[11px] text-ink-500">mat. {u.matricula}</p>
-            )}
-          </div>
-        ),
-      },
-      {
-        header: 'Login / E-mail',
-        cell: (u) => (
-          <div>
-            <p className="text-sm text-ink-700">{u.login}</p>
-            <p className="text-xs text-ink-500">{u.email}</p>
-          </div>
-        ),
-      },
-      {
-        header: 'Tipo',
-        width: 'w-40',
-        cell: (u) => (
-          <Badge variant={u.tipo === 'A' ? 'stamp' : 'neutral'}>{PERFIL_LABELS[u.tipo]}</Badge>
-        ),
-      },
-      {
-        header: 'Status',
-        width: 'w-28',
-        cell: (u) =>
-          u.status === 'A' ? (
-            <Badge variant="success">Ativo</Badge>
-          ) : (
-            <Badge variant="danger">Bloqueado</Badge>
-          ),
-      },
-      {
-        header: '',
-        width: 'w-40',
-        align: 'right',
-        cell: (u) => (
-          <div className="flex items-center justify-end gap-1">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                abrirEditar(u);
-              }}
-              className="rounded-sm p-1.5 text-ink-500 hover:bg-ink-100 hover:text-ink-900"
-              aria-label="Editar"
-            >
-              <Pencil size={14} />
-            </button>
-            {u.status === 'A' ? (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setConfirm({ user: u, action: 'bloquear' });
-                }}
-                className="rounded-sm p-1.5 text-ink-500 hover:bg-red-50 hover:text-red-700"
-                aria-label="Bloquear"
-              >
-                <Ban size={14} />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setConfirm({ user: u, action: 'reativar' });
-                }}
-                className="rounded-sm p-1.5 text-ink-500 hover:bg-emerald-50 hover:text-emerald-700"
-                aria-label="Reativar"
-              >
-                <RotateCcw size={14} />
-              </button>
-            )}
-          </div>
-        ),
-      },
-    ],
-    [],
-  );
-
-  return (
-    <AdminShell>
-      {/* Header */}
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4 animate-slide-up">
-        <div>
-          <p className="section-number mb-3">administração — 01</p>
-          <h1 className="display text-5xl tracking-tightest text-ink-900">Usuários</h1>
-          <p className="mt-2 text-base text-ink-600">
-            Administradores, professores e alunos do sistema.
-          </p>
-        </div>
-        <Button onClick={abrirCriar}>
-          <Plus size={16} />
-          Novo usuário
-        </Button>
-      </header>
-
-      {/* Filtros */}
-      <section className="mb-6 grid gap-3 sm:grid-cols-[1fr_180px_180px]">
-        <Input
-          placeholder="Buscar por nome, e-mail, login ou matrícula…"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          trailing={<Search size={14} />}
-        />
-        <Select
-          options={tipoOptions}
-          value={filtroTipo}
-          onChange={(e) => setFiltroTipo((e.target.value as Perfil) || '')}
-        />
-        <Select
-          options={statusOptions}
-          value={filtroStatus}
-          onChange={(e) => setFiltroStatus((e.target.value as StatusUsuario) || '')}
-        />
-      </section>
-
-      {/* Tabela */}
-      <Table
-        data={usuarios}
-        columns={columns}
-        rowKey={(u) => u.id}
-        loading={loading}
-        empty={
-          <EmptyState
-            icon={UserCircle}
-            title="Nenhum usuário encontrado"
-            description={
-              debouncedBusca || filtroTipo || filtroStatus
-                ? 'Ajuste os filtros ou crie um novo usuário.'
-                : 'Comece cadastrando seu primeiro professor ou aluno.'
-            }
-            action={
-              <Button onClick={abrirCriar}>
-                <Plus size={16} />
-                Novo usuário
-              </Button>
-            }
-          />
-        }
-      />
-
-      {/* Modal de criar/editar */}
-      <UsuarioForm
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        onSaved={() => {
-          setFormOpen(false);
-          carregar();
-        }}
-        usuario={editando}
-      />
-
-      {/* Confirmação */}
-      <ConfirmDialog
-        open={Boolean(confirm)}
-        onClose={() => setConfirm(null)}
-        onConfirm={executarConfirmacao}
-        title={confirm?.action === 'bloquear' ? 'Bloquear usuário' : 'Reativar usuário'}
-        description={
-          confirm?.action === 'bloquear'
-            ? `${confirm?.user.nome} não poderá mais acessar o sistema até ser reativado. Continuar?`
-            : `Reativar o acesso de ${confirm?.user.nome}?`
-        }
-        confirmLabel={confirm?.action === 'bloquear' ? 'Bloquear' : 'Reativar'}
-        destructive={confirm?.action === 'bloquear'}
-        loading={actionLoading}
-      />
-    </AdminShell>
-  );
-}
-
-// ============================================
-// Form Modal — separado pra deixar a Page legível
-// ============================================
-
-interface UsuarioFormProps {
-  open: boolean;
-  onClose: () => void;
-  onSaved: () => void;
-  usuario: Usuario | null;
-}
-
-function UsuarioForm({ open, onClose, onSaved, usuario }: UsuarioFormProps) {
-  const isEdit = Boolean(usuario);
-
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [loginInput, setLoginInput] = useState('');
-  const [senha, setSenha] = useState('');
-  const [tipo, setTipo] = useState<Perfil>('P');
-  const [matricula, setMatricula] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Reseta o form quando abre/fecha ou troca de usuário
-  useEffect(() => {
-    if (!open) return;
-    setNome(usuario?.nome ?? '');
-    setEmail(usuario?.email ?? '');
-    setLoginInput(usuario?.login ?? '');
-    setSenha('');
-    setTipo(usuario?.tipo ?? 'P');
-    setMatricula(usuario?.matricula ?? '');
-    setError(null);
-  }, [open, usuario]);
-
-  async function handleSubmit(e: FormEvent) {
+  async function submeter(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-
-    if (tipo === 'U' && !matricula.trim()) {
-      setError('Aluno precisa de matrícula.');
-      return;
-    }
-    if (!isEdit && senha.length < 6) {
-      setError('A senha precisa ter ao menos 6 caracteres.');
-      return;
-    }
-
+    setFormError(null);
     setSubmitting(true);
     try {
-      if (isEdit && usuario) {
-        const payload: AtualizarUsuarioPayload = {
-          nome,
-          email,
-          login: loginInput,
-          matricula: tipo === 'U' ? matricula : null,
-        };
-        if (senha) payload.senha = senha;
-        await usuariosApi.atualizar(usuario.id, payload);
-        toast.success('Usuário atualizado.');
-      } else {
-        const payload: CriarUsuarioPayload = {
-          nome,
-          email,
-          login: loginInput,
-          senha,
-          tipo,
-          matricula: tipo === 'U' ? matricula : null,
-        };
-        await usuariosApi.criar(payload);
+      const payload = {
+        nome: form.nome.trim(),
+        email: form.email.trim(),
+        login: form.login.trim(),
+        tipo: form.tipo,
+        matricula: form.matricula.trim() || null,
+      };
+
+      if (form.modo === 'criar') {
+        await usuariosApi.criar({ ...payload, senha: form.senha });
         toast.success('Usuário criado.');
+      } else if (form.usuario) {
+        const update = { ...payload };
+        if (form.senha) Object.assign(update, { senha: form.senha });
+        await usuariosApi.atualizar(form.usuario.id, update);
+        toast.success('Usuário atualizado.');
       }
-      onSaved();
+
+      fecharForm();
+      carregar();
     } catch (err) {
-      setError(extractErrorMessage(err));
+      setFormError(extractErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
   }
 
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={isEdit ? 'Editar usuário' : 'Novo usuário'}
-      description={isEdit ? `Editando ${usuario?.nome}` : 'Preencha os dados abaixo.'}
-      size="lg"
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose} disabled={submitting}>
-            Cancelar
-          </Button>
-          <Button type="submit" form="usuario-form" loading={submitting}>
-            {isEdit ? 'Salvar alterações' : 'Criar usuário'}
-          </Button>
-        </>
+  async function confirmarAcao() {
+    if (!bloqueando) return;
+    setAcaoLoading(true);
+    try {
+      if (bloqueando.status === 'A') {
+        await usuariosApi.bloquear(bloqueando.id);
+        toast.success('Usuário bloqueado.');
+      } else {
+        await usuariosApi.reativar(bloqueando.id);
+        toast.success('Usuário reativado.');
       }
-    >
-      <form id="usuario-form" onSubmit={handleSubmit} className="space-y-4" noValidate>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="Nome completo"
-            marker="01"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            required
-            disabled={submitting}
-          />
-          <Select
-            label="Tipo de perfil"
-            marker="02"
-            options={tipoFormOptions}
-            value={tipo}
-            onChange={(e) => setTipo(e.target.value as Perfil)}
-            disabled={submitting || isEdit /* não permitir trocar tipo na edição */}
-          />
-        </div>
+      setBloqueando(null);
+      carregar();
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    } finally {
+      setAcaoLoading(false);
+    }
+  }
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="E-mail"
-            marker="03"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={submitting}
-          />
-          <Input
-            label="Login"
-            marker="04"
-            value={loginInput}
-            onChange={(e) => setLoginInput(e.target.value)}
-            required
-            disabled={submitting}
-            hint="Letras, números, ponto, traço ou underline"
-          />
+  return (
+    <AdminShell>
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-4 animate-slide-up">
+        <div>
+          <p className="section-number mb-3">administração — 01</p>
+          <h1 className="text-display-lg text-fg-primary">Usuários</h1>
+          <p className="mt-1 text-sm text-fg-muted">
+            Cadastro, edição e bloqueio. {usuarios.length}{' '}
+            {usuarios.length === 1 ? 'registro' : 'registros'}.
+          </p>
         </div>
+        <Button onClick={abrirCriar}>
+          <Plus size={14} />
+          Novo usuário
+        </Button>
+      </header>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label={isEdit ? 'Nova senha (opcional)' : 'Senha'}
-            marker="05"
-            type="password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            required={!isEdit}
-            disabled={submitting}
-            hint={isEdit ? 'Deixe em branco para manter a atual' : 'Mínimo de 6 caracteres'}
-          />
-          {tipo === 'U' && (
+      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+        <div className="sm:col-span-1">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" />
+            <Input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar nome, email ou login…"
+              className="pl-9"
+            />
+          </div>
+        </div>
+        <Select
+          value={filtroTipo}
+          onChange={(e) => setFiltroTipo((e.target.value || '') as Perfil | '')}
+          options={[
+            { value: '', label: 'Todos os perfis' },
+            { value: 'A', label: 'Administrador' },
+            { value: 'P', label: 'Professor' },
+            { value: 'U', label: 'Aluno' },
+          ]}
+        />
+        <Select
+          value={filtroStatus}
+          onChange={(e) => setFiltroStatus((e.target.value || '') as StatusUsuario | '')}
+          options={[
+            { value: '', label: 'Todos os status' },
+            { value: 'A', label: 'Ativo' },
+            { value: 'B', label: 'Bloqueado' },
+          ]}
+        />
+      </div>
+
+      {loading ? (
+        <div className="rounded-md border border-border bg-bg-elevated p-12 text-center text-sm text-fg-muted">
+          Carregando…
+        </div>
+      ) : (
+        <Table
+          columns={[
+            {
+              header: 'nome',
+              cell: (u: Usuario) => (
+                <div>
+                  <p className="font-medium text-fg-primary">{u.nome}</p>
+                  <p className="font-mono text-[11px] text-fg-muted">{u.login}</p>
+                </div>
+              ),
+            },
+            { header: 'email', cell: (u: Usuario) => u.email },
+            {
+              header: 'matrícula',
+              cell: (u: Usuario) => (
+                <span className="font-mono text-xs text-fg-secondary">
+                  {u.matricula ?? '—'}
+                </span>
+              ),
+            },
+            {
+              header: 'perfil',
+              cell: (u: Usuario) => (
+                <Badge variant={u.tipo === 'A' ? 'accent' : u.tipo === 'P' ? 'primary' : 'neutral'}>
+                  {PERFIL_LABELS[u.tipo]}
+                </Badge>
+              ),
+            },
+            {
+              header: 'status',
+              cell: (u: Usuario) => (
+                <Badge variant={u.status === 'A' ? 'success' : 'danger'}>
+                  {u.status === 'A' ? 'ativo' : 'bloqueado'}
+                </Badge>
+              ),
+            },
+            {
+              header: '',
+              align: 'right',
+              cell: (u: Usuario) => (
+                <div className="flex justify-end gap-1">
+                  <button
+                    onClick={() => abrirEditar(u)}
+                    className="rounded-sm p-1.5 text-fg-muted transition-colors hover:bg-bg-hover hover:text-primary-400"
+                    aria-label="Editar"
+                  >
+                    <Edit size={14} />
+                  </button>
+                  <button
+                    onClick={() => setBloqueando(u)}
+                    className="rounded-sm p-1.5 text-fg-muted transition-colors hover:bg-bg-hover hover:text-accent-400"
+                    aria-label={u.status === 'A' ? 'Bloquear' : 'Reativar'}
+                  >
+                    {u.status === 'A' ? <Lock size={14} /> : <Unlock size={14} />}
+                  </button>
+                </div>
+              ),
+            },
+          ]}
+          data={usuarios}
+          rowKey={(u: Usuario) => u.id}
+          emptyState={
+            <EmptyState
+              title="Nenhum usuário encontrado"
+              description={busca ? 'Tente refinar a busca.' : 'Comece criando o primeiro usuário.'}
+            />
+          }
+        />
+      )}
+
+      <Modal
+        open={form.open}
+        onClose={fecharForm}
+        title={form.modo === 'criar' ? 'Novo usuário' : 'Editar usuário'}
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={fecharForm} disabled={submitting}>
+              Cancelar
+            </Button>
+            <Button type="submit" form="usuario-form" loading={submitting}>
+              Salvar
+            </Button>
+          </>
+        }
+      >
+        <form id="usuario-form" onSubmit={submeter} className="space-y-4" noValidate>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label="Nome"
+              marker="01"
+              value={form.nome}
+              onChange={(e) => setForm((s) => ({ ...s, nome: e.target.value }))}
+              disabled={submitting}
+              required
+            />
+            <Input
+              label="Email"
+              marker="02"
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
+              disabled={submitting}
+              required
+            />
+            <Input
+              label="Login"
+              marker="03"
+              value={form.login}
+              onChange={(e) => setForm((s) => ({ ...s, login: e.target.value }))}
+              disabled={submitting}
+              required
+            />
+            <Input
+              label={form.modo === 'criar' ? 'Senha' : 'Nova senha (deixe vazio para manter)'}
+              marker="04"
+              type="password"
+              value={form.senha}
+              onChange={(e) => setForm((s) => ({ ...s, senha: e.target.value }))}
+              disabled={submitting}
+              required={form.modo === 'criar'}
+              hint={form.modo === 'criar' ? 'Mínimo 8 caracteres' : undefined}
+            />
+            <Select
+              label="Perfil"
+              marker="05"
+              value={form.tipo}
+              onChange={(e) => setForm((s) => ({ ...s, tipo: e.target.value as Perfil }))}
+              options={[
+                { value: 'U', label: 'Aluno' },
+                { value: 'P', label: 'Professor' },
+                { value: 'A', label: 'Administrador' },
+              ]}
+              disabled={submitting}
+            />
             <Input
               label="Matrícula"
               marker="06"
-              value={matricula}
-              onChange={(e) => setMatricula(e.target.value)}
-              required
+              value={form.matricula}
+              onChange={(e) => setForm((s) => ({ ...s, matricula: e.target.value }))}
               disabled={submitting}
+              hint="Apenas para alunos"
             />
-          )}
-        </div>
-
-        {error && (
-          <div
-            role="alert"
-            className="rounded-sm border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800"
-          >
-            {error}
           </div>
-        )}
-      </form>
-    </Modal>
+
+          {formError && (
+            <div
+              role="alert"
+              className="rounded-md border border-accent-500/40 bg-accent-500/10 px-3 py-2.5 text-sm text-accent-400"
+            >
+              {formError}
+            </div>
+          )}
+        </form>
+      </Modal>
+
+      <ConfirmDialog
+        open={!!bloqueando}
+        onClose={() => setBloqueando(null)}
+        onConfirm={confirmarAcao}
+        title={bloqueando?.status === 'A' ? 'Bloquear usuário' : 'Reativar usuário'}
+        description={
+          bloqueando?.status === 'A'
+            ? `${bloqueando?.nome} não conseguirá mais acessar o sistema até ser reativado.`
+            : `${bloqueando?.nome} voltará a poder acessar o sistema.`
+        }
+        confirmLabel={bloqueando?.status === 'A' ? 'Bloquear' : 'Reativar'}
+        destructive={bloqueando?.status === 'A'}
+        loading={acaoLoading}
+      />
+    </AdminShell>
   );
 }

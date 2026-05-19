@@ -46,14 +46,14 @@ export default function EntrarSessao() {
   }
 
   return (
-    <div className="min-h-screen bg-ink-50">
+    <div className="min-h-screen bg-bg-base">
       <DashboardHeader />
 
       <main className="mx-auto max-w-xl px-6 py-12">
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="mb-6 inline-flex items-center gap-2 text-sm text-ink-600 hover:text-ink-900"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-fg-secondary hover:text-fg-primary"
         >
           <ArrowLeft size={14} />
           Voltar
@@ -61,8 +61,8 @@ export default function EntrarSessao() {
 
         <header className="mb-12 text-center animate-slide-up">
           <p className="section-number mb-3">presença — 01</p>
-          <h1 className="display text-5xl tracking-tightest text-ink-900">Entrar na sessão</h1>
-          <p className="mt-3 text-base text-ink-600">
+          <h1 className="display text-5xl tracking-tightest text-fg-primary">Entrar na sessão</h1>
+          <p className="mt-3 text-base text-fg-secondary">
             Digite o código de 4 caracteres mostrado pelo professor.
           </p>
         </header>
@@ -82,7 +82,7 @@ export default function EntrarSessao() {
           {error && (
             <div
               role="alert"
-              className="rounded-sm border border-red-200 bg-red-50 px-3 py-2.5 text-center text-sm text-red-800"
+              className="rounded-sm border border-accent-500/40 bg-accent-500/10 px-3 py-2.5 text-center text-sm text-accent-400"
             >
               {error}
             </div>
@@ -98,7 +98,7 @@ export default function EntrarSessao() {
             {submitting ? 'Validando…' : 'Confirmar presença'}
           </Button>
 
-          <p className="text-center text-xs text-ink-500">
+          <p className="text-center text-xs text-bg-base0">
             O código diferencia maiúsculas/minúsculas? Não — é case-insensitive.
           </p>
         </form>

@@ -72,26 +72,26 @@ export default function Turmas() {
         header: 'Turma',
         cell: (t) => (
           <div>
-            <p className="font-medium text-ink-900">{t.nome}</p>
-            <p className="text-xs text-ink-500">{t.disciplina}</p>
+            <p className="font-medium text-fg-primary">{t.nome}</p>
+            <p className="text-xs text-bg-base0">{t.disciplina}</p>
           </div>
         ),
       },
       {
         header: 'Período',
         width: 'w-32',
-        cell: (t) => <span className="font-mono text-sm text-ink-700">{t.periodo}</span>,
+        cell: (t) => <span className="font-mono text-sm text-fg-primary">{t.periodo}</span>,
       },
       {
         header: 'Professor',
-        cell: (t) => <span className="text-sm text-ink-700">{t.professor?.nome ?? '—'}</span>,
+        cell: (t) => <span className="text-sm text-fg-primary">{t.professor?.nome ?? '—'}</span>,
       },
       {
         header: 'Alunos',
         width: 'w-24',
         align: 'center',
         cell: (t) => (
-          <span className="font-mono text-sm tabular-nums text-ink-700">{t._count.matriculas}</span>
+          <span className="font-mono text-sm tabular-nums text-fg-primary">{t._count.matriculas}</span>
         ),
       },
       {
@@ -99,7 +99,7 @@ export default function Turmas() {
         width: 'w-24',
         align: 'center',
         cell: (t) => (
-          <span className="font-mono text-sm tabular-nums text-ink-700">{t._count.sessoes}</span>
+          <span className="font-mono text-sm tabular-nums text-fg-primary">{t._count.sessoes}</span>
         ),
       },
       {
@@ -115,7 +115,7 @@ export default function Turmas() {
                 setEditando(t);
                 setFormOpen(true);
               }}
-              className="rounded-sm p-1.5 text-ink-500 hover:bg-ink-100 hover:text-ink-900"
+              className="rounded-sm p-1.5 text-bg-base0 hover:bg-bg-hover hover:text-fg-primary"
               aria-label="Editar"
             >
               <Pencil size={14} />
@@ -126,12 +126,12 @@ export default function Turmas() {
                 e.stopPropagation();
                 setExcluindo(t);
               }}
-              className="rounded-sm p-1.5 text-ink-500 hover:bg-red-50 hover:text-red-700"
+              className="rounded-sm p-1.5 text-bg-base0 hover:bg-accent-500/10 hover:text-accent-400"
               aria-label="Excluir"
             >
               <Trash2 size={14} />
             </button>
-            <ArrowUpRight size={14} className="ml-1 text-ink-400" />
+            <ArrowUpRight size={14} className="ml-1 text-fg-muted" />
           </div>
         ),
       },
@@ -144,8 +144,8 @@ export default function Turmas() {
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4 animate-slide-up">
         <div>
           <p className="section-number mb-3">administração — 02</p>
-          <h1 className="display text-5xl tracking-tightest text-ink-900">Turmas</h1>
-          <p className="mt-2 text-base text-ink-600">
+          <h1 className="display text-5xl tracking-tightest text-fg-primary">Turmas</h1>
+          <p className="mt-2 text-base text-fg-secondary">
             Configure turmas, períodos, disciplinas e matrículas de alunos.
           </p>
         </div>
@@ -156,7 +156,7 @@ export default function Turmas() {
       </header>
 
       {professores.length === 0 && !loading && (
-        <div className="mb-6 rounded-sm border border-amber-200 bg-stamp-50 px-4 py-3 text-sm text-amber-900">
+        <div className="mb-6 rounded-md border border-primary-500/40 bg-primary-500/10 px-4 py-3 text-sm text-primary-300">
           Você precisa cadastrar ao menos um <strong>professor ativo</strong> antes de criar turmas.{' '}
           <button
             type="button"
@@ -341,7 +341,7 @@ function TurmaForm({ open, onClose, onSaved, turma, professores }: TurmaFormProp
         {error && (
           <div
             role="alert"
-            className="rounded-sm border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800"
+            className="rounded-sm border border-accent-500/40 bg-accent-500/10 px-3 py-2.5 text-sm text-accent-400"
           >
             {error}
           </div>

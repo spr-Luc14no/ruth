@@ -35,14 +35,14 @@ export default function IniciarSessao() {
   }
 
   return (
-    <div className="min-h-screen bg-ink-50">
+    <div className="min-h-screen bg-bg-base">
       <DashboardHeader />
 
       <main className="mx-auto max-w-4xl px-6 py-12">
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="mb-6 inline-flex items-center gap-2 text-sm text-ink-600 hover:text-ink-900"
+          className="mb-6 inline-flex items-center gap-2 text-sm text-fg-secondary hover:text-fg-primary"
         >
           <ArrowLeft size={14} />
           Voltar ao painel
@@ -50,14 +50,14 @@ export default function IniciarSessao() {
 
         <header className="mb-10 animate-slide-up">
           <p className="section-number mb-3">chamada — 01</p>
-          <h1 className="display text-5xl tracking-tightest text-ink-900">Iniciar chamada</h1>
-          <p className="mt-3 text-base text-ink-600">
+          <h1 className="display text-5xl tracking-tightest text-fg-primary">Iniciar chamada</h1>
+          <p className="mt-3 text-base text-fg-secondary">
             Escolha uma das suas turmas para abrir uma sessão de presença.
           </p>
         </header>
 
         {loading ? (
-          <div className="rounded-sm border border-ink-200 bg-ink-50 p-12 text-center text-sm text-ink-500">
+          <div className="rounded-sm border border-border bg-bg-base p-12 text-center text-sm text-bg-base0">
             Carregando suas turmas…
           </div>
         ) : turmas.length === 0 ? (
@@ -71,12 +71,12 @@ export default function IniciarSessao() {
             {turmas.map((t) => (
               <li
                 key={t.id}
-                className="flex items-center justify-between gap-4 rounded-sm border border-ink-200 bg-ink-50 p-5 transition-colors hover:border-ink-900"
+                className="flex items-center justify-between gap-4 rounded-sm border border-border bg-bg-base p-5 transition-colors hover:border-primary-500/60"
               >
                 <div className="min-w-0">
-                  <h3 className="display text-2xl text-ink-900">{t.nome}</h3>
-                  <p className="text-sm text-ink-600">{t.disciplina}</p>
-                  <div className="mt-2 flex gap-4 text-xs text-ink-500">
+                  <h3 className="display text-2xl text-fg-primary">{t.nome}</h3>
+                  <p className="text-sm text-fg-secondary">{t.disciplina}</p>
+                  <div className="mt-2 flex gap-4 text-xs text-bg-base0">
                     <span className="font-mono">{t.periodo}</span>
                     <span>•</span>
                     <span>

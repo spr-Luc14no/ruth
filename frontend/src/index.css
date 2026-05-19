@@ -2,49 +2,137 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========================================
+   RUTh — VAULT theme
+   Base color tokens, scrollbar, utilitários
+   ======================================== */
+
 @layer base {
-  html {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    height: 100%;
+    background-color: theme('colors.bg.base');
+    color: theme('colors.fg.primary');
+    font-family: theme('fontFamily.sans');
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
 
   body {
-    @apply bg-ink-50 text-ink-900 font-sans;
-    font-feature-settings: 'ss01', 'cv11';
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(127, 0, 255, 0.12), transparent),
+      radial-gradient(ellipse 60% 50% at 80% 100%, rgba(255, 36, 0, 0.06), transparent);
+    background-attachment: fixed;
   }
 
-  /* Tipografia: serif distintiva para títulos */
-  .display {
-    @apply font-display tracking-tightest;
-    font-feature-settings: 'liga', 'dlig';
+  /* Scrollbar dark estilo VAULT */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: theme('colors.bg.base');
+  }
+  ::-webkit-scrollbar-thumb {
+    background: theme('colors.border.DEFAULT');
+    border-radius: 4px;
+    border: 2px solid theme('colors.bg.base');
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.primary.700');
   }
 
-  /* Foco visível e elegante */
+  /* Seleção de texto neon */
+  ::selection {
+    background: theme('colors.primary.500');
+    color: theme('colors.fg.primary');
+  }
+
+  /* Foco visível padrão */
   *:focus-visible {
-    @apply outline-none ring-2 ring-ink-900 ring-offset-2 ring-offset-ink-50;
+    outline: 2px solid theme('colors.primary.500');
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Reseta autofill amarelo do Chrome */
+  input:-webkit-autofill,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: theme('colors.fg.primary');
+    -webkit-box-shadow: 0 0 0 1000px theme('colors.bg.elevated') inset;
+    caret-color: theme('colors.fg.primary');
   }
 }
 
 @layer components {
-  /* Textura sutil de papel — referência ao caderno de chamada */
-  .paper-texture {
-    background-image:
-      radial-gradient(circle at 1px 1px, rgba(28, 25, 23, 0.06) 1px, transparent 0);
-    background-size: 24px 24px;
-  }
-
-  /* Linha de caderneta vertical — divisor entre seções */
-  .rule-vertical {
-    @apply relative;
-  }
-  .rule-vertical::before {
-    content: '';
-    @apply absolute top-0 bottom-0 left-0 w-px bg-ink-200;
-  }
-
-  /* Numeração editorial — section numbers em pequeno caps mono */
+  /* Numerador editorial estilo VAULT — em uppercase mono pequeno */
   .section-number {
-    @apply font-mono text-[10px] uppercase tracking-[0.2em] text-ink-500;
+    @apply font-mono text-[10px] uppercase tracking-[0.2em] text-fg-muted;
+  }
+
+  /* Headings display geométricos */
+  .display {
+    @apply font-display font-medium;
+  }
+
+  /* Card padrão VAULT — fundo elevated, borda sutil */
+  .card-vault {
+    @apply rounded-md border border-border bg-bg-elevated;
+  }
+
+  /* Card destacado com glow violeta */
+  .card-vault-active {
+    @apply rounded-md border-2 border-primary-500 bg-bg-elevated shadow-glow-primary;
+  }
+
+  /* Texto em gradient RGB (violeta → escarlate) */
+  .text-rgb {
+    background: linear-gradient(90deg, #7f00ff 0%, #ff2400 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* Linha gradient horizontal — separador "RGB" */
+  .divider-rgb {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #7f00ff 50%, transparent);
+  }
+
+  /* Indicador "AO VIVO" — pulsante escarlate */
+  .indicator-live {
+    @apply inline-flex items-center gap-1.5 rounded-sm bg-accent-500/15 px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-widest text-accent-400;
+  }
+  .indicator-live::before {
+    content: '';
+    @apply inline-block h-1.5 w-1.5 rounded-full bg-accent-500;
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+}
+
+@layer utilities {
+  /* Tipografia responsiva pra display */
+  .text-display-xl {
+    @apply font-display text-4xl font-medium tracking-tightest sm:text-5xl lg:text-6xl;
+  }
+  .text-display-lg {
+    @apply font-display text-3xl font-medium tracking-tightest sm:text-4xl;
+  }
+  .text-display-md {
+    @apply font-display text-2xl font-medium tracking-tight sm:text-3xl;
+  }
+
+  /* Glow boxes */
+  .glow-primary {
+    box-shadow: 0 0 24px rgba(127, 0, 255, 0.4);
+  }
+  .glow-accent {
+    box-shadow: 0 0 24px rgba(255, 36, 0, 0.4);
   }
 }
