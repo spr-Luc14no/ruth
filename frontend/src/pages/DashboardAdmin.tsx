@@ -1,4 +1,5 @@
 import { Users, BookOpen, Sliders, ScrollText, ArrowUpRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardHeader } from '@/components/DashboardHeader';
 
@@ -7,19 +8,14 @@ interface FeatureCardProps {
   title: string;
   description: string;
   icon: typeof Users;
-  status: 'coming' | 'available';
+  to?: string;
 }
 
-function FeatureCard({ number, title, description, icon: Icon, status }: FeatureCardProps) {
-  const isAvailable = status === 'available';
-  return (
-    <article
-      className={`group relative flex flex-col justify-between rounded-sm border bg-ink-50 p-6 transition-colors ${
-        isAvailable
-          ? 'border-ink-300 hover:border-ink-900 cursor-pointer'
-          : 'border-ink-200 cursor-not-allowed'
-      }`}
-    >
+function FeatureCard({ number, title, description, icon: Icon, to }: FeatureCardProps) {
+  const isAvailable = Boolean(to);
+
+  const content = (
+    <>
       <div>
         <div className="mb-6 flex items-center justify-between">
           <span className="section-number">{number}</span>
@@ -45,7 +41,21 @@ function FeatureCard({ number, title, description, icon: Icon, status }: Feature
           />
         )}
       </div>
-    </article>
+    </>
+  );
+
+  const baseClasses =
+    'group relative flex h-full flex-col justify-between rounded-sm border bg-ink-50 p-6 transition-colors';
+
+  if (to) {
+    return (
+      <Link to={to} className={`${baseClasses} border-ink-300 hover:border-ink-900`}>
+        {content}
+      </Link>
+    );
+  }
+  return (
+    <article className={`${baseClasses} cursor-not-allowed border-ink-200`}>{content}</article>
   );
 }
 
@@ -71,30 +81,28 @@ export default function DashboardAdmin() {
           <FeatureCard
             number="01"
             title="Usuários"
-            description="Cadastre administradores, professores e alunos. Importação via CSV."
+            description="Cadastre administradores, professores e alunos."
             icon={Users}
-            status="coming"
+            to="/admin/usuarios"
           />
           <FeatureCard
             number="02"
             title="Turmas"
             description="Configure turmas, períodos, disciplinas e matrículas."
             icon={BookOpen}
-            status="coming"
+            to="/admin/turmas"
           />
           <FeatureCard
             number="03"
             title="Parâmetros"
             description="Janela padrão, tolerância de atraso, presença mínima e pesos."
             icon={Sliders}
-            status="coming"
           />
           <FeatureCard
             number="04"
             title="Auditoria"
             description="Logs de login, alterações e operações sensíveis do sistema."
             icon={ScrollText}
-            status="coming"
           />
         </section>
 
@@ -102,16 +110,16 @@ export default function DashboardAdmin() {
           <p className="section-number mb-4">próximas entregas</p>
           <div className="grid gap-4 text-sm text-ink-600 sm:grid-cols-3">
             <div>
-              <span className="font-mono text-xs text-ink-900">PR 3</span>
-              <p>CRUD de usuários e turmas</p>
-            </div>
-            <div>
               <span className="font-mono text-xs text-ink-900">PR 4</span>
               <p>Sessões de chamada em tempo real</p>
             </div>
             <div>
               <span className="font-mono text-xs text-ink-900">PR 5</span>
               <p>Interações e relatórios</p>
+            </div>
+            <div>
+              <span className="font-mono text-xs text-ink-900">PR 6</span>
+              <p>Parâmetros e auditoria UI</p>
             </div>
           </div>
         </section>
