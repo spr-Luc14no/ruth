@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { OtpInput } from '@/components/OtpInput';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
 import { sessoesApi, extractErrorMessage, isApiErrorCode } from '@/services/api';
 import type { SessaoBasica } from '@/types';
 
@@ -21,13 +20,12 @@ export default function DashboardAluno() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Ao montar: verifica se já tem sessão em andamento
   useEffect(() => {
     sessoesApi
       .ativaDoAluno()
       .then(setSessaoAtiva)
       .catch(() => {
-        // silencioso — não bloqueia o dashboard se a checagem falhar
+        // silencioso
       })
       .finally(() => setCarregandoAtiva(false));
   }, []);
@@ -41,7 +39,6 @@ export default function DashboardAluno() {
         await sessoesApi.checkin(sessao.id);
         toast.success('Presença registrada!');
       } catch (checkinErr) {
-        // Se já tem presença nesta sessão, NÃO é erro — só reentra.
         if (isApiErrorCode(checkinErr, 'JA_REGISTRADO')) {
           toast.success('Voltando à sessão…');
         } else {
@@ -56,52 +53,55 @@ export default function DashboardAluno() {
   }
 
   return (
-    <div className="min-h-screen bg-ink-50">
+    <div className="min-h-screen bg-bg-base">
       <DashboardHeader />
 
       <main className="mx-auto max-w-3xl px-6 py-12">
         <section className="mb-10 animate-slide-up">
           <p className="section-number mb-3">painel — aluno</p>
-          <h1 className="display text-5xl tracking-tightest text-ink-900">
-            Olá, {user?.nome.split(' ')[0]}.
+          <h1 className="text-display-xl text-fg-primary">
+            Olá, <span className="text-rgb">{user?.nome.split(' ')[0]}</span>.
           </h1>
-          <p className="mt-3 text-base text-ink-600">
+          <p className="mt-3 text-base text-fg-secondary">
             Insira o código fornecido pelo professor para registrar sua presença.
           </p>
         </section>
 
-        {/* Banner de sessão em andamento */}
+        {/* Banner sessão ativa */}
         {!carregandoAtiva && sessaoAtiva && (
           <Link
             to={`/aluno/sessao/${sessaoAtiva.id}`}
-            className="mb-6 flex flex-wrap items-center justify-between gap-6 rounded-sm border-2 border-ink-900 bg-ink-50 p-6 transition-colors hover:bg-ink-100 animate-slide-up"
+            className="group mb-6 flex flex-wrap items-center justify-between gap-6 rounded-md border-2 border-primary-500/50 bg-bg-elevated p-6 shadow-glow-primary transition-all hover:border-primary-500 hover:bg-bg-hover animate-slide-up"
           >
             <div className="flex items-center gap-5">
-              <div className="rounded-full bg-stamp-50 p-3">
-                <PlayCircle size={24} className="text-stamp-700" />
+              <div className="rounded-full bg-primary-500/15 p-3">
+                <PlayCircle size={24} className="text-primary-400" />
               </div>
               <div>
-                <div className="mb-1 flex items-center gap-2">
-                  <Badge variant="stamp">você está nesta sessão</Badge>
-                  <span className="font-mono text-xs text-ink-500">
+                <div className="mb-1.5 flex items-center gap-2">
+                  <span className="indicator-live">ao vivo</span>
+                  <span className="font-mono text-xs text-fg-muted">
                     código: {sessaoAtiva.codigo}
                   </span>
                 </div>
-                <p className="display text-2xl text-ink-900">{sessaoAtiva.turma.nome}</p>
-                <p className="text-sm text-ink-600">{sessaoAtiva.turma.disciplina}</p>
+                <p className="display text-2xl text-fg-primary">{sessaoAtiva.turma.nome}</p>
+                <p className="text-sm text-fg-muted">{sessaoAtiva.turma.disciplina}</p>
               </div>
             </div>
-            <ArrowUpRight size={20} className="text-ink-700" />
+            <ArrowUpRight
+              size={20}
+              className="text-fg-secondary transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary-400"
+            />
           </Link>
         )}
 
-        {/* Bloco principal: inserir código */}
-        <section className="rounded-sm border border-ink-200 bg-ink-50 p-8">
+        {/* OTP */}
+        <section className="rounded-md border border-border bg-bg-elevated p-8">
           <div className="mb-6 flex items-center justify-between">
             <p className="section-number">
               {sessaoAtiva ? '02 · entrar em outra sessão' : '01 · entrar na sessão'}
             </p>
-            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-stamp-600">
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary-400">
               ✓ disponível
             </span>
           </div>
@@ -116,14 +116,14 @@ export default function DashboardAluno() {
             disabled={submitting}
           />
 
-          <p className="mt-4 text-center text-xs text-ink-500">
-            Quatro caracteres alfanuméricos — exemplo: <span className="font-mono">A2B3</span>.
+          <p className="mt-4 text-center text-xs text-fg-muted">
+            Quatro caracteres alfanuméricos — exemplo: <span className="font-mono text-primary-400">A2B3</span>
           </p>
 
           {error && (
             <div
               role="alert"
-              className="mt-4 rounded-sm border border-red-200 bg-red-50 px-3 py-2.5 text-center text-sm text-red-800"
+              className="mt-4 rounded-md border border-accent-500/40 bg-accent-500/10 px-3 py-2.5 text-center text-sm text-accent-400"
             >
               {error}
             </div>
@@ -140,17 +140,16 @@ export default function DashboardAluno() {
           </Button>
         </section>
 
-        {/* Histórico */}
         <section className="mt-8 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-sm border border-ink-200 bg-ink-50 p-5">
-            <CheckCircle2 size={18} className="mb-3 text-ink-400" />
-            <p className="display text-xl text-ink-500">Presenças</p>
-            <p className="mt-1 text-xs text-ink-500">Suas confirmações registradas (em breve).</p>
+          <div className="rounded-md border border-border bg-bg-elevated p-5">
+            <CheckCircle2 size={18} className="mb-3 text-fg-muted" />
+            <p className="display text-xl text-fg-secondary">Presenças</p>
+            <p className="mt-1 text-xs text-fg-muted">Suas confirmações registradas (em breve).</p>
           </div>
-          <div className="rounded-sm border border-ink-200 bg-ink-50 p-5">
-            <History size={18} className="mb-3 text-ink-400" />
-            <p className="display text-xl text-ink-500">Histórico</p>
-            <p className="mt-1 text-xs text-ink-500">Sessões anteriores das suas turmas.</p>
+          <div className="rounded-md border border-border bg-bg-elevated p-5">
+            <History size={18} className="mb-3 text-fg-muted" />
+            <p className="display text-xl text-fg-secondary">Histórico</p>
+            <p className="mt-1 text-xs text-fg-muted">Sessões anteriores das suas turmas.</p>
           </div>
         </section>
       </main>

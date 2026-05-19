@@ -6,7 +6,7 @@ interface ConfirmDialogProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  description: string;
+  description?: string;
   confirmLabel?: string;
   cancelLabel?: string;
   destructive?: boolean;
@@ -21,14 +21,15 @@ export function ConfirmDialog({
   description,
   confirmLabel = 'Confirmar',
   cancelLabel = 'Cancelar',
-  destructive = false,
-  loading = false,
+  destructive,
+  loading,
 }: ConfirmDialogProps) {
   return (
     <Modal
       open={open}
       onClose={onClose}
       title={title}
+      description={description}
       size="sm"
       footer={
         <>
@@ -36,16 +37,17 @@ export function ConfirmDialog({
             {cancelLabel}
           </Button>
           <Button
+            variant={destructive ? 'danger' : 'primary'}
             onClick={onConfirm}
             loading={loading}
-            className={destructive ? '!bg-red-600 hover:!bg-red-700' : undefined}
           >
             {confirmLabel}
           </Button>
         </>
       }
     >
-      <p className="text-sm text-ink-700">{description}</p>
+      {/* O Modal já mostra o título e descrição, o conteúdo aqui é placeholder */}
+      <div className="hidden" />
     </Modal>
   );
 }

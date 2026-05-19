@@ -66,18 +66,18 @@ export default function TurmaDetalhePage() {
     () => [
       {
         header: 'Nome',
-        cell: (a) => <span className="font-medium text-ink-900">{a.nome}</span>,
+        cell: (a) => <span className="font-medium text-fg-primary">{a.nome}</span>,
       },
       {
         header: 'Matrícula',
         width: 'w-40',
         cell: (a) => (
-          <span className="font-mono text-sm text-ink-700">{a.matricula ?? '—'}</span>
+          <span className="font-mono text-sm text-fg-primary">{a.matricula ?? '—'}</span>
         ),
       },
       {
         header: 'E-mail',
-        cell: (a) => <span className="text-sm text-ink-600">{a.email}</span>,
+        cell: (a) => <span className="text-sm text-fg-secondary">{a.email}</span>,
       },
       {
         header: 'Status',
@@ -100,7 +100,7 @@ export default function TurmaDetalhePage() {
               e.stopPropagation();
               setRemovendo(a);
             }}
-            className="rounded-sm p-1.5 text-ink-500 hover:bg-red-50 hover:text-red-700"
+            className="rounded-sm p-1.5 text-bg-base0 hover:bg-accent-500/10 hover:text-accent-400"
             aria-label="Remover matrícula"
           >
             <X size={14} />
@@ -114,7 +114,7 @@ export default function TurmaDetalhePage() {
   if (loading || !turma) {
     return (
       <AdminShell>
-        <div className="flex h-64 items-center justify-center text-sm text-ink-500">Carregando…</div>
+        <div className="flex h-64 items-center justify-center text-sm text-bg-base0">Carregando…</div>
       </AdminShell>
     );
   }
@@ -125,7 +125,7 @@ export default function TurmaDetalhePage() {
       <button
         type="button"
         onClick={() => navigate('/admin/turmas')}
-        className="mb-6 inline-flex items-center gap-2 text-sm text-ink-600 hover:text-ink-900"
+        className="mb-6 inline-flex items-center gap-2 text-sm text-fg-secondary hover:text-fg-primary"
       >
         <ArrowLeft size={14} />
         Todas as turmas
@@ -134,24 +134,24 @@ export default function TurmaDetalhePage() {
       {/* Header */}
       <header className="mb-10 animate-slide-up">
         <p className="section-number mb-3">turma — #{turma.id}</p>
-        <h1 className="display text-5xl tracking-tightest text-ink-900">{turma.nome}</h1>
+        <h1 className="display text-5xl tracking-tightest text-fg-primary">{turma.nome}</h1>
 
-        <dl className="mt-6 grid grid-cols-1 gap-px overflow-hidden rounded-sm bg-ink-200 sm:grid-cols-4">
-          <div className="bg-ink-50 px-5 py-4">
+        <dl className="mt-6 grid grid-cols-1 gap-px overflow-hidden rounded-sm bg-border sm:grid-cols-4">
+          <div className="bg-bg-base px-5 py-4">
             <dt className="section-number">disciplina</dt>
-            <dd className="mt-1 text-sm text-ink-900">{turma.disciplina}</dd>
+            <dd className="mt-1 text-sm text-fg-primary">{turma.disciplina}</dd>
           </div>
-          <div className="bg-ink-50 px-5 py-4">
+          <div className="bg-bg-base px-5 py-4">
             <dt className="section-number">período</dt>
-            <dd className="mt-1 font-mono text-sm text-ink-900">{turma.periodo}</dd>
+            <dd className="mt-1 font-mono text-sm text-fg-primary">{turma.periodo}</dd>
           </div>
-          <div className="bg-ink-50 px-5 py-4">
+          <div className="bg-bg-base px-5 py-4">
             <dt className="section-number">professor</dt>
-            <dd className="mt-1 text-sm text-ink-900">{turma.professor.nome}</dd>
+            <dd className="mt-1 text-sm text-fg-primary">{turma.professor.nome}</dd>
           </div>
-          <div className="bg-ink-50 px-5 py-4">
+          <div className="bg-bg-base px-5 py-4">
             <dt className="section-number">sessões</dt>
-            <dd className="mt-1 font-mono text-sm text-ink-900">{turma._count.sessoes}</dd>
+            <dd className="mt-1 font-mono text-sm text-fg-primary">{turma._count.sessoes}</dd>
           </div>
         </dl>
       </header>
@@ -161,8 +161,8 @@ export default function TurmaDetalhePage() {
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
             <p className="section-number mb-2">matrículas</p>
-            <h2 className="display text-3xl tracking-tightest text-ink-900">Alunos</h2>
-            <p className="mt-1 text-sm text-ink-600">
+            <h2 className="display text-3xl tracking-tightest text-fg-primary">Alunos</h2>
+            <p className="mt-1 text-sm text-fg-secondary">
               {turma.matriculas.length}{' '}
               {turma.matriculas.length === 1 ? 'aluno matriculado' : 'alunos matriculados'}.
             </p>
@@ -305,9 +305,9 @@ function MatriculaModal({
       }
     >
       {loading ? (
-        <p className="py-4 text-sm text-ink-500">Carregando alunos…</p>
+        <p className="py-4 text-sm text-bg-base0">Carregando alunos…</p>
       ) : alunos.length === 0 ? (
-        <p className="py-4 text-sm text-ink-600">
+        <p className="py-4 text-sm text-fg-secondary">
           Não há alunos disponíveis para matricular. Cadastre alunos em <strong>Usuários</strong> ou
           eles já estão todos matriculados nesta turma.
         </p>
@@ -325,7 +325,7 @@ function MatriculaModal({
       {error && (
         <div
           role="alert"
-          className="mt-3 rounded-sm border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800"
+          className="mt-3 rounded-sm border border-accent-500/40 bg-accent-500/10 px-3 py-2.5 text-sm text-accent-400"
         >
           {error}
         </div>

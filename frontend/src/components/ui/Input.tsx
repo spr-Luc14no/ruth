@@ -1,69 +1,63 @@
-import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, InputHTMLAttributes, useId } from 'react';
 import { cn } from '@/lib/cn';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  error?: string;
   hint?: string;
-  /** Pequeno rótulo numérico no canto direito do label, ex: "01" */
-  marker?: string;
-  trailing?: ReactNode;
+  error?: string;
+  marker?: string; // ex: '01' aparece em mono pequeno antes do label
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, hint, marker, trailing, id, ...props }, ref) => {
-    const generatedId = useId();
-    const inputId = id ?? generatedId;
-    const hasError = Boolean(error);
+  ({ label, hint, error, marker, className, id, ...rest }, ref) => {
+    const reactId = useId();
+    const inputId = id ?? reactId;
 
     return (
-      <div className="w-full">
+      <div className="space-y-1.5">
         {label && (
-          <div className="mb-2 flex items-baseline justify-between">
-            <label htmlFor={inputId} className="text-sm font-medium text-ink-800">
+          <div className="flex items-baseline justify-between gap-3">
+            <label
+              htmlFor={inputId}
+              className="text-sm font-medium text-fg-secondary"
+            >
               {label}
+              {rest.required && <span className="ml-0.5 text-accent-500">*</span>}
             </label>
             {marker && <span className="section-number">{marker}</span>}
           </div>
         )}
-
-        <div className="relative">
-          <input
-            ref={ref}
-            id={inputId}
-            aria-invalid={hasError || undefined}
-            aria-describedby={hasError ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
-            className={cn(
-              'w-full rounded-sm border bg-ink-50 px-3 py-2.5 font-sans text-sm text-ink-900',
-              'placeholder:text-ink-400',
-              'transition-colors duration-150',
-              hasError
-                ? 'border-red-500 focus:ring-red-500/30'
-                : 'border-ink-300 focus:border-ink-900',
-              trailing ? 'pr-10' : null,
-              className
-            )}
-            {...props}
-          />
-          {trailing && (
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-ink-500">
-              {trailing}
-            </div>
+        <input
+          ref={ref}
+          id={inputId}
+          aria-invalid={!!error}
+          aria-describedby={
+            error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined
+          }
+          className={cn(
+            'block w-full rounded-md border bg-bg-elevated px-3 py-2.5 text-sm text-fg-primary',
+            'placeholder:text-fg-muted',
+            'transition-colors duration-150',
+            'focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30',
+            'disabled:cursor-not-allowed disabled:opacity-50',
+            error
+              ? 'border-accent-500 focus:border-accent-500 focus:ring-accent-500/30'
+              : 'border-border',
+            className,
           )}
-        </div>
-
-        {error && (
-          <p id={`${inputId}-error`} className="mt-1.5 text-xs text-red-600">
+          {...rest}
+        />
+        {error ? (
+          <p id={`${inputId}-error`} className="text-xs text-accent-400">
             {error}
           </p>
-        )}
-        {!error && hint && (
-          <p id={`${inputId}-hint`} className="mt-1.5 text-xs text-ink-500">
+        ) : hint ? (
+          <p id={`${inputId}-hint`} className="text-xs text-fg-muted">
             {hint}
           </p>
-        )}
+        ) : null}
       </div>
     );
-  }
+  },
 );
 Input.displayName = 'Input';

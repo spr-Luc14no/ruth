@@ -10,11 +10,6 @@ interface OtpInputProps {
   autoFocus?: boolean;
 }
 
-/**
- * Input de OTP/código curto. Avança foco automaticamente,
- * suporta paste do código inteiro e backspace pra voltar.
- * Sempre uppercase.
- */
 export function OtpInput({
   length = 4,
   value,
@@ -109,9 +104,13 @@ export function OtpInput({
             disabled={disabled}
             aria-label={`Caractere ${i + 1} do código`}
             className={cn(
-              'h-20 w-16 rounded-sm border-2 bg-ink-50 text-center font-mono text-4xl font-medium uppercase tabular-nums text-ink-900',
-              'transition-colors duration-150 focus:outline-none',
-              focused === i ? 'border-ink-900' : 'border-ink-300',
+              'h-20 w-16 rounded-md border-2 bg-bg-elevated text-center font-mono text-4xl font-medium uppercase tabular-nums text-fg-primary',
+              'transition-all duration-200 focus:outline-none',
+              focused === i
+                ? 'border-primary-500 shadow-glow-primary'
+                : char
+                  ? 'border-primary-500/40'
+                  : 'border-border',
               disabled && 'opacity-50',
             )}
           />

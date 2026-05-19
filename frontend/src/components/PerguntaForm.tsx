@@ -115,18 +115,18 @@ export function PerguntaForm({ open, onClose, onCreated, sessaoId }: PerguntaFor
 
         <div>
           <div className="mb-2 flex items-baseline justify-between">
-            <label className="text-sm font-medium text-ink-800">Alternativas</label>
+            <label className="text-sm font-medium text-fg-secondary">Alternativas</label>
             <span className="section-number">02</span>
           </div>
-          <p className="mb-3 text-xs text-ink-500">
-            Marque a opção correta (opcional — útil para mostrar o gabarito no resumo).
+          <p className="mb-3 text-xs text-fg-muted">
+            Marque a opção correta — destacada em violeta nos resultados.
           </p>
 
           <div className="space-y-2">
             {opcoes.map((opcao, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 rounded-sm border border-ink-200 bg-ink-50 px-2 py-1.5"
+                className="flex items-center gap-2 rounded-md border border-border bg-bg-base px-2 py-1.5"
               >
                 <label className="flex shrink-0 cursor-pointer items-center gap-2 pl-1">
                   <input
@@ -134,10 +134,10 @@ export function PerguntaForm({ open, onClose, onCreated, sessaoId }: PerguntaFor
                     name="correta"
                     checked={opcao.correta}
                     onChange={() => setCorreta(i)}
-                    className="h-3 w-3 cursor-pointer accent-stamp-600"
+                    className="h-3 w-3 cursor-pointer accent-primary-500"
                     disabled={submitting}
                   />
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-ink-400">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-fg-muted">
                     {String.fromCharCode(65 + i)}
                   </span>
                 </label>
@@ -147,14 +147,14 @@ export function PerguntaForm({ open, onClose, onCreated, sessaoId }: PerguntaFor
                   onChange={(e) => setDescricao(i, e.target.value)}
                   placeholder={`Alternativa ${String.fromCharCode(65 + i)}`}
                   disabled={submitting}
-                  className="flex-1 bg-transparent px-2 py-1 text-sm text-ink-900 placeholder:text-ink-400 focus:outline-none"
+                  className="flex-1 bg-transparent px-2 py-1 text-sm text-fg-primary placeholder:text-fg-muted focus:outline-none"
                 />
                 {opcoes.length > 2 && (
                   <button
                     type="button"
                     onClick={() => removerOpcao(i)}
                     disabled={submitting}
-                    className="rounded-sm p-1 text-ink-400 hover:bg-ink-100 hover:text-red-700"
+                    className="rounded-sm p-1 text-fg-muted transition-colors hover:bg-bg-hover hover:text-accent-400"
                     aria-label="Remover alternativa"
                   >
                     <Trash2 size={12} />
@@ -169,7 +169,7 @@ export function PerguntaForm({ open, onClose, onCreated, sessaoId }: PerguntaFor
               type="button"
               onClick={adicionarOpcao}
               disabled={submitting}
-              className="mt-2 inline-flex items-center gap-1.5 text-xs text-ink-600 hover:text-ink-900"
+              className="mt-2 inline-flex items-center gap-1.5 text-xs text-fg-secondary transition-colors hover:text-primary-400"
             >
               <Plus size={12} />
               adicionar alternativa
@@ -180,7 +180,7 @@ export function PerguntaForm({ open, onClose, onCreated, sessaoId }: PerguntaFor
         {error && (
           <div
             role="alert"
-            className="rounded-sm border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800"
+            className="rounded-md border border-accent-500/40 bg-accent-500/10 px-3 py-2.5 text-sm text-accent-400"
           >
             {error}
           </div>

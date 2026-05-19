@@ -15,12 +15,25 @@ createRoot(document.getElementById('root')!).render(
           position="top-right"
           toastOptions={{
             style: {
-              background: '#1c1917',
-              color: '#fafaf9',
-              fontFamily: 'Geist, sans-serif',
+              background: '#1A1A2E',
+              color: '#E8E8FF',
+              fontFamily: 'Inter, sans-serif',
               fontSize: '14px',
-              borderRadius: '4px',
-              border: '1px solid #44403c',
+              borderRadius: '6px',
+              border: '1px solid #2A2A3E',
+              boxShadow: '0 0 24px rgba(127, 0, 255, 0.15)',
+            },
+            success: {
+              iconTheme: {
+                primary: '#7F00FF',
+                secondary: '#E8E8FF',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: '#FF2400',
+                secondary: '#E8E8FF',
+              },
             },
           }}
         />

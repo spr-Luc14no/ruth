@@ -1,0 +1,53 @@
+{
+  "name": "RailGuardReanchorGate",
+  "version": "1.0.0",
+  "status": "canonical",
+  "description": "Canonical field contract for re-anchoring long AI coding conversations back to the current run, scope, risk, evidence, and next safe action.",
+  "required_fields": [
+    { "key": "reanchor_status", "label": "Reanchor status" },
+    { "key": "trigger", "label": "Trigger" },
+    { "key": "messages_since_last_reanchor", "label": "Messages since last reanchor" },
+    { "key": "current_run_id", "label": "Current RUN_ID" },
+    { "key": "request_run_id", "label": "Request RUN_ID" },
+    { "key": "source_run_id", "label": "Source RUN_ID" },
+    { "key": "source_run_id_status", "label": "Source RUN_ID status" },
+    { "key": "user_profile", "label": "User profile" },
+    { "key": "work_mode", "label": "Work mode" },
+    { "key": "current_task", "label": "Current task" },
+    { "key": "active_command", "label": "Active command" },
+    { "key": "allowed_scope", "label": "Allowed scope" },
+    { "key": "forbidden_scope", "label": "Forbidden scope" },
+    { "key": "sensitive_areas", "label": "Sensitive areas" },
+    { "key": "risk_level", "label": "Risk level" },
+    { "key": "risk_boundary", "label": "Risk boundary" },
+    { "key": "scope_drift_detected", "label": "Scope drift detected" },
+    { "key": "requested_scope", "label": "Requested scope" },
+    { "key": "evidence_status", "label": "Evidence status" },
+    { "key": "memory_loaded", "label": "Memory loaded" },
+    { "key": "can_continue", "label": "Can continue" },
+    { "key": "next_safe_action", "label": "Next safe action" }
+  ],
+  "trigger_on": [
+    "every_5_user_messages_since_last_reanchor",
+    "user_says_continue_or_next",
+    "before_file_edit",
+    "before_tool_execution",
+    "before_final_report",
+    "before_git_action",
+    "before_high_or_max_sensitive_work",
+    "after_scope_change",
+    "after_long_answer_or_context_dump",
+    "before_possible_cross_scope_request"
+  ],
+  "allowed_can_continue": ["ok", "partial", "stop"],
+  "stop_when_unknown": [
+    "current_run_id_for_real_task",
+    "current_task",
+    "allowed_scope_for_implementation",
+    "forbidden_scope_for_implementation",
+    "requested_scope_when_scope_drift_is_possible",
+    "risk_level_for_sensitive_work",
+    "risk_boundary_for_high_or_max_work",
+    "source_run_id_for_prior_work"
+  ]
+}

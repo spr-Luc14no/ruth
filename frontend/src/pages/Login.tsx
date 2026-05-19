@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { extractErrorMessage } from '@/services/api';
 import { Button } from '@/components/ui/Button';
@@ -9,176 +9,151 @@ import { Input } from '@/components/ui/Input';
 import { Logo } from '@/components/Logo';
 
 export default function Login() {
-  const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { login: doLogin } = useAuth();
 
   const [loginInput, setLoginInput] = useState('');
   const [senha, setSenha] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [showSenha, setShowSenha] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Já logado? Vai pra dashboard
-  if (user) {
-    return <Navigate to="/" replace />;
-  }
+  const fromPath = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setErrorMessage(null);
+    setError(null);
 
     if (!loginInput.trim() || !senha) {
-      setErrorMessage('Preencha login e senha.');
+      setError('Preencha login e senha.');
       return;
     }
 
     setSubmitting(true);
     try {
-      const usuario = await login(loginInput.trim(), senha);
-      toast.success(`Bem-vindo, ${usuario.nome.split(' ')[0]}.`);
-      const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/';
-      navigate(from, { replace: true });
+      const usuario = await doLogin(loginInput.trim(), senha);
+      toast.success(`Bem-vindo, ${usuario.nome.split(' ')[0]}!`);
+      navigate(fromPath || '/', { replace: true });
     } catch (err) {
-      setErrorMessage(extractErrorMessage(err));
+      setError(extractErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-ink-50">
-      <div className="mx-auto grid min-h-screen max-w-7xl grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
-        {/* ============ HERO EDITORIAL ============ */}
-        <aside className="relative hidden flex-col justify-between overflow-hidden p-12 lg:flex xl:p-16">
-          {/* Textura sutil de papel */}
-          <div className="paper-texture absolute inset-0 opacity-60" aria-hidden="true" />
+    <div className="relative min-h-screen overflow-hidden bg-bg-base">
+      {/* Nebulosa de fundo */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 60% 50% at 20% 30%, rgba(127, 0, 255, 0.2), transparent), radial-gradient(ellipse 50% 40% at 80% 70%, rgba(255, 36, 0, 0.12), transparent)',
+        }}
+        aria-hidden
+      />
 
-          {/* Marcações decorativas — números pequenos como códigos de chamada */}
-          <div className="pointer-events-none absolute right-12 top-32 select-none font-mono text-[10px] uppercase tracking-[0.3em] text-ink-400">
-            <div>cod. 0xff</div>
-            <div className="mt-1 text-stamp-600">✓ presente</div>
-          </div>
-          <div className="pointer-events-none absolute right-20 top-1/2 select-none font-mono text-[10px] uppercase tracking-[0.3em] text-ink-300">
-            cod. 1e37
-          </div>
-
-          {/* Linha vertical decorativa */}
-          <div
-            className="pointer-events-none absolute right-0 top-0 h-full w-px bg-ink-200"
-            aria-hidden="true"
-          />
-
-          {/* Header */}
-          <header className="relative flex items-center justify-between">
-            <Logo size="md" />
-            <span className="section-number">v0.1 · 2026</span>
-          </header>
-
-          {/* Tipografia hero */}
-          <div className="relative animate-slide-up">
-            <p className="section-number mb-6">001 — Sistema de chamada interativa</p>
-            <h1 className="display text-[64px] leading-[1.05] tracking-tightest text-ink-900 xl:text-[80px]">
-              A chamada,
-              <br />
-              <span className="italic text-stamp-600">reinventada</span>
-              <br />
-              em tempo real.
+      <main className="relative flex min-h-screen items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md animate-slide-up">
+          {/* Brand */}
+          <div className="mb-10 flex flex-col items-center text-center">
+            <Logo size={56} showName={false} />
+            <h1 className="mt-5 font-display text-4xl font-medium tracking-tightest text-fg-primary">
+              RUTh
             </h1>
-            <p className="mt-8 max-w-md text-base leading-relaxed text-ink-600">
-              O <span className="font-medium text-ink-900">RUTh</span> substitui a
-              papelada da chamada por sessões com janela de tempo, validação por
-              interação e relatórios automáticos. Para professores que querem o tempo
-              de aula de volta.
-            </p>
+            <p className="mt-1 text-sm text-fg-muted">Sistema de Chamada Interativa</p>
           </div>
 
-          {/* Footer da aside */}
-          <footer className="relative flex items-end justify-between">
-            <div className="space-y-1">
-              <p className="section-number">Trabalho final</p>
-              <p className="text-sm text-ink-700">Arquitetura de Software</p>
-            </div>
-            <div className="text-right">
-              <p className="section-number">Equipe</p>
-              <p className="text-sm text-ink-700">5 dev · 1 sistema</p>
-            </div>
-          </footer>
-        </aside>
+          {/* Card */}
+          <div className="rounded-md border border-border bg-bg-elevated/80 p-8 shadow-glow-soft backdrop-blur-sm">
+            <header className="mb-6">
+              <p className="section-number mb-2">acesso — 01</p>
+              <h2 className="display text-2xl text-fg-primary">Entrar na plataforma</h2>
+            </header>
 
-        {/* ============ FORMULÁRIO ============ */}
-        <section className="flex items-center justify-center p-6 sm:p-12">
-          <div className="w-full max-w-sm animate-fade-in">
-            {/* Logo mobile (aside fica oculta) */}
-            <div className="mb-12 lg:hidden">
-              <Logo size="lg" />
-            </div>
-
-            <div className="mb-8">
-              <p className="section-number mb-3">002 — Acesso</p>
-              <h2 className="display text-4xl tracking-tightest text-ink-900">Entre na sua conta</h2>
-              <p className="mt-2 text-sm text-ink-600">
-                Use suas credenciais institucionais.
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <Input
                 label="Login ou e-mail"
                 marker="01"
-                type="text"
-                autoComplete="username"
-                placeholder="admin"
                 value={loginInput}
                 onChange={(e) => setLoginInput(e.target.value)}
+                placeholder="seu.usuario"
                 disabled={submitting}
                 required
+                autoFocus
+                autoComplete="username"
               />
 
-              <Input
-                label="Senha"
-                marker="02"
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                placeholder="••••••••"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                disabled={submitting}
-                required
-                trailing={
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="text-ink-500 hover:text-ink-900"
-                    aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                }
-              />
+              <div className="relative">
+                <Input
+                  label="Senha"
+                  marker="02"
+                  type={showSenha ? 'text' : 'password'}
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  placeholder="••••••••"
+                  disabled={submitting}
+                  required
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSenha((s) => !s)}
+                  aria-label={showSenha ? 'Esconder senha' : 'Mostrar senha'}
+                  className="absolute right-3 top-9 text-fg-muted transition-colors hover:text-fg-primary"
+                  tabIndex={-1}
+                >
+                  {showSenha ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
 
-              {errorMessage && (
+              {error && (
                 <div
                   role="alert"
-                  className="rounded-sm border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800"
+                  className="rounded-md border border-accent-500/40 bg-accent-500/10 px-3 py-2.5 text-sm text-accent-400"
                 >
-                  {errorMessage}
+                  {error}
                 </div>
               )}
 
               <Button type="submit" size="lg" loading={submitting} className="w-full">
-                {submitting ? 'Entrando…' : 'Entrar'}
+                {submitting ? 'Validando…' : 'Entrar'}
               </Button>
             </form>
-
-            <div className="mt-8 border-t border-ink-200 pt-6">
-              <p className="text-xs text-ink-500">
-                Esqueceu sua senha? Entre em contato com a coordenação para redefinir.
-              </p>
-            </div>
           </div>
-        </section>
-      </div>
+
+          {/* Demo helper */}
+          <details className="mt-6">
+            <summary className="cursor-pointer text-center text-xs text-fg-muted transition-colors hover:text-primary-400">
+              contas de demonstração
+            </summary>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+              <div className="rounded-md border border-border bg-bg-elevated p-2 text-center">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-fg-muted">
+                  admin
+                </p>
+                <p className="mt-1 font-mono text-fg-primary">admin</p>
+                <p className="font-mono text-fg-muted">admin123</p>
+              </div>
+              <div className="rounded-md border border-border bg-bg-elevated p-2 text-center">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-fg-muted">
+                  professor
+                </p>
+                <p className="mt-1 font-mono text-fg-primary">moacir</p>
+                <p className="font-mono text-fg-muted">prof123</p>
+              </div>
+              <div className="rounded-md border border-border bg-bg-elevated p-2 text-center">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-fg-muted">
+                  aluno
+                </p>
+                <p className="mt-1 font-mono text-fg-primary">ramon</p>
+                <p className="font-mono text-fg-muted">aluno123</p>
+              </div>
+            </div>
+          </details>
+        </div>
+      </main>
     </div>
   );
 }
