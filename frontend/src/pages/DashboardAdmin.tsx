@@ -82,21 +82,21 @@ export default function DashboardAdmin() {
             title="Relatórios"
             description="Consolidados de presença, exportação CSV e PDF."
             icon={BarChart3}
-            disabled
+            to="/admin/relatorios"
           />
           <AdminCard
             marker="04"
             title="Parâmetros"
             description="Tolerância de atraso, presença mínima, regras do sistema."
             icon={Sliders}
-            disabled
+            to="/admin/parametros"
           />
           <AdminCard
             marker="05"
             title="Auditoria"
             description="Histórico imutável de todas as ações sensíveis."
             icon={ShieldCheck}
-            disabled
+            to="/admin/auditoria"
           />
           <AdminCard
             marker="06"

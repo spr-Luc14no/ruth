@@ -125,19 +125,32 @@ export default function DashboardProfessor() {
           </section>
         )}
 
-        {/* Cards menores */}
+        {/* Cards de ações */}
         <section className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-md border border-border bg-bg-elevated p-5">
+          <Link
+            to="/admin/relatorios"
+            className="group rounded-md border border-border bg-bg-elevated p-5 transition-all hover:border-primary-500/60 hover:bg-bg-hover hover:shadow-glow-soft"
+          >
+            <div className="mb-3 flex items-start justify-between">
+              <BarChart3 size={18} className="text-primary-400" />
+              <ArrowUpRight
+                size={14}
+                className="text-fg-muted transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary-400"
+              />
+            </div>
+            <p className="display text-xl text-fg-primary">Relatórios</p>
+            <p className="mt-1 text-xs text-fg-muted">
+              Consolidados de presença, exportação CSV e PDF.
+            </p>
+          </Link>
+
+          <div className="rounded-md border border-border bg-bg-elevated p-5 opacity-60">
             <Calendar size={18} className="mb-3 text-fg-muted" />
             <p className="display text-xl text-fg-secondary">Histórico</p>
-            <p className="mt-1 text-xs text-fg-muted">Sessões anteriores e presenças.</p>
+            <p className="mt-1 text-xs text-fg-muted">Sessões anteriores (em breve).</p>
           </div>
-          <div className="rounded-md border border-border bg-bg-elevated p-5">
-            <BarChart3 size={18} className="mb-3 text-fg-muted" />
-            <p className="display text-xl text-fg-secondary">Relatórios</p>
-            <p className="mt-1 text-xs text-fg-muted">Exportação em CSV ou PDF (PR6).</p>
-          </div>
-          <div className="rounded-md border border-border bg-bg-elevated p-5">
+
+          <div className="rounded-md border border-border bg-bg-elevated p-5 opacity-60">
             <Bell size={18} className="mb-3 text-fg-muted" />
             <p className="display text-xl text-fg-secondary">Interações</p>
             <p className="mt-1 text-xs text-fg-muted">Disponíveis dentro de uma sessão ativa.</p>

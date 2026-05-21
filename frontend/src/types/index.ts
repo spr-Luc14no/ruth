@@ -163,6 +163,68 @@ export interface EventoSessaoEncerrada {
   encerradaEm: string;
 }
 
+// ============ PR6 — Relatórios ============
+
+export interface LinhaRelatorio {
+  alunoId: number;
+  alunoNome: string;
+  matricula: string | null;
+  totalSessoes: number;
+  presencasConfirmadas: number;
+  presencasPendentes: number;
+  faltas: number;
+  percentualPresenca: number;
+  ultimaPresenca: string | null;
+}
+
+export interface RelatorioTurma {
+  turma: {
+    id: number;
+    nome: string;
+    disciplina: string;
+    periodo: string;
+  };
+  filtro: {
+    dataInicio?: string;
+    dataFim?: string;
+  };
+  geradoEm: string;
+  totalSessoesConsideradas: number;
+  linhas: LinhaRelatorio[];
+}
+
+// ============ PR6 — Parâmetros ============
+
+export interface Parametro {
+  id: number;
+  chave: string;
+  descricao: string;
+  valor: string;
+  tipo: string; // MIN, P, INT, STR
+  ativo: boolean;
+}
+
+// ============ PR6 — Auditoria ============
+
+export interface LogAuditoria {
+  id: number;
+  usuarioId: number | null;
+  acao: string;
+  entidade: string;
+  dataEvento: string;
+  detalhes: string | null;
+  ip: string | null;
+  usuario: { id: number; nome: string; login: string } | null;
+}
+
+export interface ListaAuditoria {
+  logs: LogAuditoria[];
+  total: number;
+  pagina: number;
+  porPagina: number;
+  totalPaginas: number;
+}
+
 // ============ Padrão de resposta da API ============
 
 export interface ApiSuccess<T> {

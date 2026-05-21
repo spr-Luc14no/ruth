@@ -13,13 +13,16 @@ import type {
   TipoPergunta,
   PerguntaPublica,
   ResultadosPergunta,
+  RelatorioTurma,
+  Parametro,
+  ListaAuditoria,
 } from '@/types';
 
 const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 
 export const api = axios.create({
   baseURL: `${baseURL}/api`,
-  timeout: 15000,
+  timeout: 30000, // mais tolerante pra geração de PDF
 });
 
 api.interceptors.request.use((config) => {
@@ -54,11 +57,6 @@ export function extractErrorMessage(err: unknown): string {
   return 'Erro inesperado.';
 }
 
-/**
- * Verifica se o erro recebido corresponde a um código específico
- * retornado pela API (`error.code`). Útil pra tratar erros de negócio
- * conhecidos como sucessos (ex: JA_REGISTRADO).
- */
 export function isApiErrorCode(err: unknown, code: string): boolean {
   if (!axios.isAxiosError(err)) return false;
   const data = err.response?.data as ApiResponse<unknown> | undefined;
@@ -172,7 +170,6 @@ export const sessoesApi = {
   buscar: (id: number) => unwrap<SessaoDetalhe>(api.get(`/sessoes/${id}`)),
   buscarPorCodigo: (codigo: string) =>
     unwrap<SessaoBasica>(api.get(`/sessoes/codigo/${codigo.toUpperCase()}`)),
-  /** Sessão ativa em que o aluno já tem presença registrada (ou null). */
   ativaDoAluno: () => unwrap<SessaoBasica | null>(api.get('/sessoes/ativa-do-aluno')),
   checkin: (sessaoId: number) =>
     unwrap<{
@@ -187,7 +184,7 @@ export const sessoesApi = {
 };
 
 // ============================================
-// Interações (perguntas)
+// Interações
 // ============================================
 
 export interface DispararPerguntaPayload {
@@ -208,3 +205,98 @@ export const interacoesApi = {
   resultados: (perguntaId: number) =>
     unwrap<ResultadosPergunta>(api.get(`/perguntas/${perguntaId}/resultados`)),
 };
+
+// ============================================
+// PR6 — Relatórios
+// ============================================
+
+export interface FiltroRelatorio {
+  dataInicio?: string;
+  dataFim?: string;
+}
+
+export const relatoriosApi = {
+  /** Resumo consolidado em JSON */
+  resumo: (turmaId: number, filtro: FiltroRelatorio = {}) =>
+    unwrap<RelatorioTurma>(api.get(`/relatorios/turmas/${turmaId}`, { params: filtro })),
+
+  /** Faz download direto do CSV (browser baixa o arquivo) */
+  downloadCSV: async (turmaId: number, filtro: FiltroRelatorio = {}) => {
+    const response = await api.get(`/relatorios/turmas/${turmaId}/csv`, {
+      params: filtro,
+      responseType: 'blob',
+    });
+    triggerDownload(response.data, extractFilename(response, 'relatorio.csv'));
+  },
+
+  /** Faz download direto do PDF */
+  downloadPDF: async (turmaId: number, filtro: FiltroRelatorio = {}) => {
+    const response = await api.get(`/relatorios/turmas/${turmaId}/pdf`, {
+      params: filtro,
+      responseType: 'blob',
+    });
+    triggerDownload(response.data, extractFilename(response, 'relatorio.pdf'));
+  },
+};
+
+// ============================================
+// PR6 — Parâmetros
+// ============================================
+
+export interface AtualizarParametroPayload {
+  valor: string;
+  ativo?: boolean;
+}
+
+export const parametrosApi = {
+  listar: () => unwrap<Parametro[]>(api.get('/parametros')),
+  atualizar: (id: number, payload: AtualizarParametroPayload) =>
+    unwrap<Parametro>(api.put(`/parametros/${id}`, payload)),
+};
+
+// ============================================
+// PR6 — Auditoria
+// ============================================
+
+export interface FiltroAuditoria {
+  acao?: string;
+  entidade?: string;
+  usuarioId?: number;
+  dataInicio?: string;
+  dataFim?: string;
+  pagina?: number;
+  porPagina?: number;
+}
+
+export const auditoriaApi = {
+  listar: (filtro: FiltroAuditoria = {}) =>
+    unwrap<ListaAuditoria>(api.get('/auditoria', { params: filtro })),
+};
+
+// ============================================
+// Helpers internos
+// ============================================
+
+function triggerDownload(blob: Blob, filename: string) {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  // Pequeno delay pro browser começar download antes de revogar
+  setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+}
+
+function extractFilename(
+  response: { headers: Record<string, unknown> },
+  fallback: string,
+): string {
+  const disposition = response.headers['content-disposition'];
+  if (typeof disposition === 'string') {
+    const match = disposition.match(/filename="?([^";]+)"?/);
+    if (match) return match[1];
+  }
+  return fallback;
+}
