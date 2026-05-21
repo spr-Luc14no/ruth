@@ -4,6 +4,9 @@ import DashboardRouter from './pages/DashboardRouter';
 import Usuarios from './pages/admin/Usuarios';
 import Turmas from './pages/admin/Turmas';
 import TurmaDetalhe from './pages/admin/TurmaDetalhe';
+import Relatorios from './pages/admin/Relatorios';
+import Parametros from './pages/admin/Parametros';
+import Auditoria from './pages/admin/Auditoria';
 import IniciarSessao from './pages/professor/IniciarSessao';
 import SessaoAtiva from './pages/professor/SessaoAtiva';
 import EntrarSessao from './pages/aluno/EntrarSessao';
@@ -46,6 +49,30 @@ export default function App() {
         element={
           <ProtectedRoute perfis={['A']}>
             <TurmaDetalhe />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/relatorios"
+        element={
+          <ProtectedRoute perfis={['A', 'P']}>
+            <Relatorios />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/parametros"
+        element={
+          <ProtectedRoute perfis={['A']}>
+            <Parametros />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/auditoria"
+        element={
+          <ProtectedRoute perfis={['A']}>
+            <Auditoria />
           </ProtectedRoute>
         }
       />

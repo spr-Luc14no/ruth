@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Users, GraduationCap, Home } from 'lucide-react';
+import { Users, GraduationCap, BarChart3, Sliders, ShieldCheck, Home } from 'lucide-react';
 import { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { DashboardHeader } from './DashboardHeader';
@@ -12,6 +12,9 @@ const nav = [
   { to: '/', label: 'Painel', icon: Home, marker: '00' },
   { to: '/admin/usuarios', label: 'Usuários', icon: Users, marker: '01' },
   { to: '/admin/turmas', label: 'Turmas', icon: GraduationCap, marker: '02' },
+  { to: '/admin/relatorios', label: 'Relatórios', icon: BarChart3, marker: '03' },
+  { to: '/admin/parametros', label: 'Parâmetros', icon: Sliders, marker: '04' },
+  { to: '/admin/auditoria', label: 'Auditoria', icon: ShieldCheck, marker: '05' },
 ];
 
 export function AdminShell({ children }: AdminShellProps) {
@@ -60,9 +63,9 @@ export function AdminShell({ children }: AdminShellProps) {
           <div className="mt-8 rounded-md border border-border bg-bg-elevated p-4">
             <p className="section-number mb-2">próximas etapas</p>
             <ul className="space-y-1.5 text-xs text-fg-muted">
-              <li>· Relatórios (CSV/PDF)</li>
-              <li>· Parâmetros do sistema</li>
-              <li>· Logs de auditoria</li>
+              <li>· Banco de perguntas (PR7)</li>
+              <li>· Gamificação (PR8)</li>
+              <li>· Música & sons (PR9)</li>
             </ul>
           </div>
         </aside>
