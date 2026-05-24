@@ -1,5 +1,4 @@
-// DTOs espelhando o backend RUTh
-// Mantido manualmente em sincronia com backend/src/types
+// DTOs espelhando o backend RUTh — PR7 (estrutura com Disciplinas)
 
 export type Perfil = 'A' | 'P' | 'U';
 export type StatusUsuario = 'A' | 'B';
@@ -26,16 +25,32 @@ export interface LoginResponse {
   usuario: Usuario;
 }
 
-// ============ Turmas ============
+export interface DisciplinaResumo {
+  id: number;
+  nome: string;
+  turmaId: number;
+  professorId: number;
+  professor: { id: number; nome: string; email?: string };
+  toleranciaAtrasoMin?: number | null;
+  janelaPadraoMin?: number | null;
+  _count?: { sessoes: number };
+}
+
+export interface DisciplinaDoProfessor {
+  id: number;
+  nome: string;
+  turmaId: number;
+  professorId: number;
+  turma: { id: number; nome: string; periodo: string };
+  _count?: { sessoes: number };
+}
 
 export interface TurmaResumo {
   id: number;
   nome: string;
   periodo: string;
-  disciplina: string;
-  professorId: number;
-  professor: { id: number; nome: string; email?: string };
-  _count: { matriculas: number; sessoes: number };
+  disciplinas: DisciplinaResumo[];
+  _count: { matriculas: number };
 }
 
 export interface AlunoMatriculado {
@@ -56,22 +71,32 @@ export interface TurmaDetalhe extends TurmaResumo {
   matriculas: MatriculaItem[];
 }
 
-// ============ Sessões ============
-
 export type StatusSessao = 'ABERTA' | 'ENCERRADA' | 'PAUSADA';
 export type StatusPresenca = 'CONFIRMADO' | 'PENDENTE' | 'INVALIDO';
-export type TipoPergunta = 'MULTIPLA' | 'VF' | 'ENQUETE' | 'TEXTO';
+export type TipoPergunta =
+  | 'MULTIPLA'
+  | 'MULTIPLA_MULTI'
+  | 'VF'
+  | 'ENQUETE'
+  | 'TEXTO'
+  | 'IMAGEM';
+
+export interface SessaoDisciplina {
+  id: number;
+  nome: string;
+  turma: { id: number; nome: string; periodo: string };
+}
 
 export interface SessaoBasica {
   id: number;
-  turmaId: number;
+  disciplinaId: number;
   professorId: number;
   dataAbertura: string;
   dataEncerramento: string | null;
   janelaMin: number;
   status: StatusSessao;
   codigo: string;
-  turma: { id: number; nome: string; disciplina: string };
+  disciplina: SessaoDisciplina;
 }
 
 export interface PresencaItem {
@@ -117,12 +142,16 @@ export interface ResultadosPergunta {
   porOpcao: ResultadoOpcao[];
 }
 
-export interface SessaoDetalhe extends SessaoBasica {
-  turma: {
+export interface SessaoDetalhe extends Omit<SessaoBasica, 'disciplina'> {
+  disciplina: {
     id: number;
     nome: string;
-    disciplina: string;
-    _count: { matriculas: number };
+    turma: {
+      id: number;
+      nome: string;
+      periodo: string;
+      _count: { matriculas: number };
+    };
   };
   presencas: PresencaItem[];
   perguntas: Array<
@@ -133,8 +162,6 @@ export interface SessaoDetalhe extends SessaoBasica {
     }
   >;
 }
-
-// ============ Eventos Socket ============
 
 export interface EventoPresencaNova {
   sessaoId: number;
@@ -163,8 +190,6 @@ export interface EventoSessaoEncerrada {
   encerradaEm: string;
 }
 
-// ============ PR6 — Relatórios ============
-
 export interface LinhaRelatorio {
   alunoId: number;
   alunoNome: string;
@@ -175,36 +200,31 @@ export interface LinhaRelatorio {
   faltas: number;
   percentualPresenca: number;
   ultimaPresenca: string | null;
+  aprovado: boolean;
 }
 
-export interface RelatorioTurma {
-  turma: {
+export interface RelatorioDisciplina {
+  disciplina: {
     id: number;
     nome: string;
-    disciplina: string;
-    periodo: string;
+    turma: { id: number; nome: string; periodo: string };
+    professor: { id: number; nome: string };
   };
-  filtro: {
-    dataInicio?: string;
-    dataFim?: string;
-  };
+  filtro: { dataInicio?: string; dataFim?: string };
   geradoEm: string;
   totalSessoesConsideradas: number;
+  presencaMinima: number;
   linhas: LinhaRelatorio[];
 }
-
-// ============ PR6 — Parâmetros ============
 
 export interface Parametro {
   id: number;
   chave: string;
   descricao: string;
   valor: string;
-  tipo: string; // MIN, P, INT, STR
+  tipo: string;
   ativo: boolean;
 }
-
-// ============ PR6 — Auditoria ============
 
 export interface LogAuditoria {
   id: number;
@@ -225,7 +245,12 @@ export interface ListaAuditoria {
   totalPaginas: number;
 }
 
-// ============ Padrão de resposta da API ============
+export interface ResultadoImportacao {
+  total: number;
+  criados: number;
+  matriculados: number;
+  erros: Array<{ linha: number; nome: string; motivo: string }>;
+}
 
 export interface ApiSuccess<T> {
   success: true;
@@ -234,11 +259,7 @@ export interface ApiSuccess<T> {
 
 export interface ApiError {
   success: false;
-  error: {
-    code: string;
-    message: string;
-    details?: unknown;
-  };
+  error: { code: string; message: string; details?: unknown };
 }
 
 export type ApiResponse<T> = ApiSuccess<T> | ApiError;

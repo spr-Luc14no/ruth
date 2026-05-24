@@ -16,60 +16,53 @@ export interface LinhaRelatorio {
   faltas: number;
   percentualPresenca: number;
   ultimaPresenca: string | null;
+  aprovado: boolean;
 }
 
-export interface RelatorioTurma {
-  turma: {
+export interface RelatorioDisciplina {
+  disciplina: {
     id: number;
     nome: string;
-    disciplina: string;
-    periodo: string;
+    turma: { id: number; nome: string; periodo: string };
+    professor: { id: number; nome: string };
   };
   filtro: FiltroRelatorio;
   geradoEm: string;
   totalSessoesConsideradas: number;
+  presencaMinima: number;
   linhas: LinhaRelatorio[];
 }
 
 export class RelatorioService {
-  /**
-   * Consolida a presença por aluno da turma no período informado.
-   *
-   * - Considera todas as sessões ENCERRADAS da turma no período
-   * - Conta presenças por aluno (CONFIRMADO + PENDENTE)
-   * - Calcula faltas como (total sessões - presenças do aluno)
-   * - Calcula % de presença
-   */
-  static async consolidarPorTurma(
-    turmaId: number,
+  static async consolidarPorDisciplina(
+    disciplinaId: number,
     filtro: FiltroRelatorio = {},
     solicitanteId: number,
     solicitanteTipo: 'A' | 'P' | 'U',
-  ): Promise<RelatorioTurma> {
-    const turma = await prisma.turma.findUnique({
-      where: { id: turmaId },
+  ): Promise<RelatorioDisciplina> {
+    const disciplina = await prisma.disciplina.findUnique({
+      where: { id: disciplinaId },
       select: {
         id: true,
         nome: true,
-        disciplina: true,
-        periodo: true,
+        turmaId: true,
         professorId: true,
+        turma: { select: { id: true, nome: true, periodo: true } },
+        professor: { select: { id: true, nome: true } },
       },
     });
-    if (!turma) throw new NotFoundError('Turma');
+    if (!disciplina) throw new NotFoundError('Disciplina');
 
-    // Professor só vê relatório de turma própria; admin vê todas
-    if (solicitanteTipo === 'P' && turma.professorId !== solicitanteId) {
-      throw new ForbiddenError('Você só pode ver relatórios das suas turmas.');
+    if (solicitanteTipo === 'P' && disciplina.professorId !== solicitanteId) {
+      throw new ForbiddenError('Você só pode ver relatórios das suas disciplinas.');
     }
     if (solicitanteTipo === 'U') {
-      throw new ForbiddenError('Alunos não acessam relatórios de turma.');
+      throw new ForbiddenError('Alunos não acessam relatórios de disciplina.');
     }
 
-    // Sessões ENCERRADAS da turma no período
     const sessoes = await prisma.sessaoChamada.findMany({
       where: {
-        turmaId,
+        disciplinaId,
         status: 'ENCERRADA',
         ...(filtro.dataInicio || filtro.dataFim
           ? {
@@ -85,18 +78,12 @@ export class RelatorioService {
     const totalSessoes = sessoes.length;
     const sessaoIds = sessoes.map((s: { id: number }) => s.id);
 
-    // Alunos matriculados
     const matriculas = await prisma.matricula.findMany({
-      where: { turmaId },
-      include: {
-        aluno: {
-          select: { id: true, nome: true, matricula: true },
-        },
-      },
+      where: { turmaId: disciplina.turmaId },
+      include: { aluno: { select: { id: true, nome: true, matricula: true } } },
       orderBy: { aluno: { nome: 'asc' } },
     });
 
-    // Presenças desses alunos nessas sessões
     const presencas =
       sessaoIds.length === 0
         ? []
@@ -105,25 +92,16 @@ export class RelatorioService {
               sessaoId: { in: sessaoIds },
               alunoId: { in: matriculas.map((m: { alunoId: number }) => m.alunoId) },
             },
-            select: {
-              alunoId: true,
-              status: true,
-              marcadoEm: true,
-            },
+            select: { alunoId: true, status: true, marcadoEm: true },
           });
 
-    // Agrupa por aluno
     interface PorAluno {
       confirmadas: number;
       pendentes: number;
       ultima: Date | null;
     }
     const porAluno = new Map<number, PorAluno>();
-    for (const p of presencas as Array<{
-      alunoId: number;
-      status: string;
-      marcadoEm: Date;
-    }>) {
+    for (const p of presencas as Array<{ alunoId: number; status: string; marcadoEm: Date }>) {
       const atual = porAluno.get(p.alunoId) ?? { confirmadas: 0, pendentes: 0, ultima: null };
       if (p.status === 'CONFIRMADO') atual.confirmadas++;
       else if (p.status === 'PENDENTE') atual.pendentes++;
@@ -131,16 +109,15 @@ export class RelatorioService {
       porAluno.set(p.alunoId, atual);
     }
 
+    const paramMinima = await prisma.parametro.findUnique({ where: { chave: 'presenca_minima' } });
+    const presencaMinima = paramMinima ? Number(paramMinima.valor) : 75;
+
     const linhas: LinhaRelatorio[] = matriculas.map(
-      (m: {
-        aluno: { id: number; nome: string; matricula: string | null };
-      }) => {
+      (m: { aluno: { id: number; nome: string; matricula: string | null } }) => {
         const stats = porAluno.get(m.aluno.id) ?? { confirmadas: 0, pendentes: 0, ultima: null };
         const totalPresencas = stats.confirmadas + stats.pendentes;
         const faltas = Math.max(0, totalSessoes - totalPresencas);
-        const percentual =
-          totalSessoes > 0 ? Math.round((totalPresencas / totalSessoes) * 100) : 0;
-
+        const percentual = totalSessoes > 0 ? Math.round((totalPresencas / totalSessoes) * 100) : 0;
         return {
           alunoId: m.aluno.id,
           alunoNome: m.aluno.nome,
@@ -151,170 +128,99 @@ export class RelatorioService {
           faltas,
           percentualPresenca: percentual,
           ultimaPresenca: stats.ultima ? stats.ultima.toISOString() : null,
+          aprovado: totalSessoes > 0 && percentual >= presencaMinima,
         };
       },
     );
 
     return {
-      turma: {
-        id: turma.id,
-        nome: turma.nome,
-        disciplina: turma.disciplina,
-        periodo: turma.periodo,
+      disciplina: {
+        id: disciplina.id,
+        nome: disciplina.nome,
+        turma: disciplina.turma,
+        professor: disciplina.professor,
       },
       filtro,
       geradoEm: new Date().toISOString(),
       totalSessoesConsideradas: totalSessoes,
+      presencaMinima,
       linhas,
     };
   }
 
-  /**
-   * Gera string CSV (RFC 4180) a partir do relatório consolidado.
-   * Codificação UTF-8 com BOM pra abrir bonito no Excel.
-   */
-  static gerarCSV(relatorio: RelatorioTurma): string {
+  static gerarCSV(relatorio: RelatorioDisciplina): string {
     const escape = (v: string | number | null) => {
       if (v === null || v === undefined) return '';
       const s = String(v);
-      if (s.includes('"') || s.includes(',') || s.includes('\n')) {
-        return `"${s.replace(/"/g, '""')}"`;
-      }
+      if (s.includes('"') || s.includes(',') || s.includes('\n')) return `"${s.replace(/"/g, '""')}"`;
       return s;
     };
-
     const linhas: string[] = [];
-    linhas.push(`# Relatório de Presença — ${relatorio.turma.nome}`);
-    linhas.push(`# Disciplina: ${relatorio.turma.disciplina} | Período: ${relatorio.turma.periodo}`);
+    linhas.push(`# Relatório de Presença — ${relatorio.disciplina.nome}`);
+    linhas.push(`# Turma: ${relatorio.disciplina.turma.nome} (${relatorio.disciplina.turma.periodo}) | Professor: ${relatorio.disciplina.professor.nome}`);
     linhas.push(`# Sessões consideradas: ${relatorio.totalSessoesConsideradas}`);
+    linhas.push(`# Presença mínima p/ aprovação: ${relatorio.presencaMinima}%`);
     linhas.push(`# Gerado em: ${new Date(relatorio.geradoEm).toLocaleString('pt-BR')}`);
     linhas.push('');
     linhas.push(
-      [
-        'Aluno',
-        'Matrícula',
-        'Total sessões',
-        'Presenças confirmadas',
-        'Presenças em tolerância',
-        'Faltas',
-        '% de presença',
-        'Última presença',
-      ]
-        .map(escape)
-        .join(','),
+      ['Aluno', 'Matrícula', 'Total sessões', 'Presenças confirmadas', 'Presenças em tolerância', 'Faltas', '% de presença', 'Situação', 'Última presença']
+        .map(escape).join(','),
     );
-
     for (const l of relatorio.linhas) {
       linhas.push(
-        [
-          l.alunoNome,
-          l.matricula,
-          l.totalSessoes,
-          l.presencasConfirmadas,
-          l.presencasPendentes,
-          l.faltas,
-          `${l.percentualPresenca}%`,
-          l.ultimaPresenca ? new Date(l.ultimaPresenca).toLocaleString('pt-BR') : '—',
-        ]
-          .map(escape)
-          .join(','),
+        [l.alunoNome, l.matricula, l.totalSessoes, l.presencasConfirmadas, l.presencasPendentes, l.faltas, `${l.percentualPresenca}%`, l.aprovado ? 'Aprovado' : 'Reprovado', l.ultimaPresenca ? new Date(l.ultimaPresenca).toLocaleString('pt-BR') : '—']
+          .map(escape).join(','),
       );
     }
-
-    // BOM pra Excel reconhecer UTF-8
     return '\uFEFF' + linhas.join('\r\n');
   }
 
-  /**
-   * Gera Buffer de PDF estilo VAULT — header escuro com gradient, tabela limpa.
-   */
-  static async gerarPDF(relatorio: RelatorioTurma): Promise<Buffer> {
+  static async gerarPDF(relatorio: RelatorioDisciplina): Promise<Buffer> {
     const PDFDocument = (await import('pdfkit')).default;
     const doc = new PDFDocument({ size: 'A4', margin: 40 });
-
     const chunks: Buffer[] = [];
     doc.on('data', (c: Buffer) => chunks.push(c));
-    const done = new Promise<Buffer>((resolve) => {
-      doc.on('end', () => resolve(Buffer.concat(chunks)));
-    });
+    const done = new Promise<Buffer>((resolve) => doc.on('end', () => resolve(Buffer.concat(chunks))));
 
-    // ============ Header ============
     doc.rect(0, 0, doc.page.width, 90).fill('#0A0A0F');
     doc.fillColor('#E8E8FF').fontSize(22).text('RUTh — Relatório de Presença', 40, 30);
-    doc
-      .fillColor('#A8A8C0')
-      .fontSize(10)
-      .text(`Gerado em ${new Date(relatorio.geradoEm).toLocaleString('pt-BR')}`, 40, 60);
-
-    // ============ Faixa violeta sob o header ============
+    doc.fillColor('#A8A8C0').fontSize(10).text(`Gerado em ${new Date(relatorio.geradoEm).toLocaleString('pt-BR')}`, 40, 60);
     doc.rect(0, 90, doc.page.width, 4).fill('#7F00FF');
 
-    // ============ Bloco de info da turma ============
     let y = 120;
-    doc.fillColor('#1A1A2E').rect(40, y, doc.page.width - 80, 60).fill();
-    doc.fillColor('#A8A8C0').fontSize(8).text('TURMA', 50, y + 10);
-    doc.fillColor('#E8E8FF').fontSize(14).text(relatorio.turma.nome, 50, y + 22);
-    doc
-      .fillColor('#A8A8C0')
-      .fontSize(9)
-      .text(
-        `${relatorio.turma.disciplina}  ·  período ${relatorio.turma.periodo}  ·  ${relatorio.totalSessoesConsideradas} sessões`,
-        50,
-        y + 42,
-      );
+    doc.fillColor('#1A1A2E').rect(40, y, doc.page.width - 80, 72).fill();
+    doc.fillColor('#A8A8C0').fontSize(8).text('DISCIPLINA', 50, y + 10);
+    doc.fillColor('#E8E8FF').fontSize(14).text(relatorio.disciplina.nome, 50, y + 22);
+    doc.fillColor('#A8A8C0').fontSize(9).text(`${relatorio.disciplina.turma.nome} · ${relatorio.disciplina.turma.periodo} · prof. ${relatorio.disciplina.professor.nome}`, 50, y + 42);
+    doc.fillColor('#6E6E80').fontSize(8).text(`${relatorio.totalSessoesConsideradas} sessoes · aprovacao >= ${relatorio.presencaMinima}%`, 50, y + 56);
+    y += 92;
 
-    y += 80;
-
-    // ============ Cabeçalho da tabela ============
     doc.fillColor('#6E6E80').fontSize(8);
-    const cols = {
-      aluno: 50,
-      matricula: 260,
-      conf: 340,
-      pend: 390,
-      falt: 440,
-      pct: 480,
-    };
+    const cols = { aluno: 50, mat: 230, conf: 320, falt: 370, pct: 415, sit: 470 };
     doc.text('ALUNO', cols.aluno, y);
-    doc.text('MATRÍCULA', cols.matricula, y);
-    doc.text('CONF', cols.conf, y);
-    doc.text('PEND', cols.pend, y);
+    doc.text('MATRICULA', cols.mat, y);
+    doc.text('PRES', cols.conf, y);
     doc.text('FALT', cols.falt, y);
-    doc.text('% PRES', cols.pct, y);
-
+    doc.text('%', cols.pct, y);
+    doc.text('SITUACAO', cols.sit, y);
     y += 14;
     doc.moveTo(40, y).lineTo(doc.page.width - 40, y).strokeColor('#2A2A3E').stroke();
     y += 8;
 
-    // ============ Linhas ============
     doc.fontSize(9);
     for (const l of relatorio.linhas) {
-      if (y > doc.page.height - 60) {
-        doc.addPage();
-        y = 50;
-      }
-      doc.fillColor('#E8E8FF').text(l.alunoNome.substring(0, 35), cols.aluno, y);
-      doc.fillColor('#A8A8C0').text(l.matricula ?? '—', cols.matricula, y);
-      doc.fillColor('#E8E8FF').text(String(l.presencasConfirmadas), cols.conf, y);
-      doc.fillColor('#E8E8FF').text(String(l.presencasPendentes), cols.pend, y);
+      if (y > doc.page.height - 60) { doc.addPage(); y = 50; }
+      doc.fillColor('#E8E8FF').text(l.alunoNome.substring(0, 32), cols.aluno, y);
+      doc.fillColor('#A8A8C0').text(l.matricula ?? '—', cols.mat, y);
+      doc.fillColor('#E8E8FF').text(String(l.presencasConfirmadas + l.presencasPendentes), cols.conf, y);
       doc.fillColor('#E8E8FF').text(String(l.faltas), cols.falt, y);
-
-      // % com cor por faixa
-      const pctColor =
-        l.percentualPresenca >= 75 ? '#34D399' : l.percentualPresenca >= 50 ? '#FBBF24' : '#FF2400';
+      const pctColor = l.percentualPresenca >= 75 ? '#34D399' : l.percentualPresenca >= 50 ? '#FBBF24' : '#FF2400';
       doc.fillColor(pctColor).text(`${l.percentualPresenca}%`, cols.pct, y);
-
+      doc.fillColor(l.aprovado ? '#34D399' : '#FF2400').text(l.aprovado ? 'Aprovado' : 'Reprovado', cols.sit, y);
       y += 14;
     }
 
-    // ============ Footer ============
-    doc.fontSize(8).fillColor('#6E6E80');
-    doc.text(
-      'RUTh · Sistema de Chamada Interativa · documento gerado automaticamente',
-      40,
-      doc.page.height - 30,
-    );
-
+    doc.fontSize(8).fillColor('#6E6E80').text('RUTh · Sistema de Chamada Interativa · documento gerado automaticamente', 40, doc.page.height - 30);
     doc.end();
     return done;
   }

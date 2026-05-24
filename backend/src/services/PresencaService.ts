@@ -26,10 +26,10 @@ export class PresencaService {
       where: { id: sessaoId },
       select: {
         id: true,
-        turmaId: true,
         status: true,
         dataAbertura: true,
         janelaMin: true,
+        disciplina: { select: { turmaId: true, toleranciaAtrasoMin: true } },
       },
     });
     if (!sessao) throw new NotFoundError('Sessão');
@@ -41,7 +41,7 @@ export class PresencaService {
 
     // RN11: aluno tem que estar matriculado na turma
     const matricula = await prisma.matricula.findUnique({
-      where: { alunoId_turmaId: { alunoId, turmaId: sessao.turmaId } },
+      where: { alunoId_turmaId: { alunoId, turmaId: sessao.disciplina.turmaId } },
     });
     if (!matricula) {
       throw new BusinessRuleError(
@@ -69,10 +69,13 @@ export class PresencaService {
     );
 
     // Busca tolerância do parâmetro
-    const paramTolerancia = await prisma.parametro.findUnique({
-      where: { chave: 'tolerancia_atraso' },
-    });
-    const toleranciaMin = paramTolerancia ? Number(paramTolerancia.valor) : 0;
+    let toleranciaMin: number;
+    if (sessao.disciplina.toleranciaAtrasoMin != null) {
+      toleranciaMin = sessao.disciplina.toleranciaAtrasoMin;
+    } else {
+      const paramTolerancia = await prisma.parametro.findUnique({ where: { chave: 'tolerancia_atraso' } });
+      toleranciaMin = paramTolerancia ? Number(paramTolerancia.valor) : 0;
+    }
     const limiteTotalMin = sessao.janelaMin + toleranciaMin;
 
     if (minutosDesdeAbertura > limiteTotalMin) {

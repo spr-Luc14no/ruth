@@ -129,8 +129,8 @@ export default function SessaoAluno() {
         {/* Header */}
         <header className="mb-8 animate-slide-up">
           <p className="section-number mb-3">sessão · {sessao.codigo}</p>
-          <h1 className="display text-4xl tracking-tightest text-fg-primary">{sessao.turma.nome}</h1>
-          <p className="mt-1 text-sm text-fg-secondary">{sessao.turma.disciplina}</p>
+          <h1 className="display text-4xl tracking-tightest text-fg-primary">{sessao.disciplina.nome}</h1>
+          <p className="mt-1 text-sm text-fg-secondary">{sessao.disciplina.turma.nome}</p>
         </header>
 
         {/* Status da presença */}

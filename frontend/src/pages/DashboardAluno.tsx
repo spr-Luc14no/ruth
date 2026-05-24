@@ -84,8 +84,8 @@ export default function DashboardAluno() {
                     código: {sessaoAtiva.codigo}
                   </span>
                 </div>
-                <p className="display text-2xl text-fg-primary">{sessaoAtiva.turma.nome}</p>
-                <p className="text-sm text-fg-muted">{sessaoAtiva.turma.disciplina}</p>
+                <p className="display text-2xl text-fg-primary">{sessaoAtiva.disciplina.nome}</p>
+                <p className="text-sm text-fg-muted">{sessaoAtiva.disciplina.turma.nome}</p>
               </div>
             </div>
             <ArrowUpRight

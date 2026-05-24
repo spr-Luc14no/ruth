@@ -67,7 +67,7 @@ export default function DashboardProfessor() {
                     código: {sessaoAtiva.codigo}
                   </span>
                 </div>
-                <p className="display text-2xl text-fg-primary">{sessaoAtiva.turma.nome}</p>
+                <p className="display text-2xl text-fg-primary">{sessaoAtiva.disciplina.nome}</p>
                 <p className="text-sm text-fg-muted">
                   {sessaoAtiva._count.presencas}{' '}
                   {sessaoAtiva._count.presencas === 1 ? 'presença' : 'presenças'} registradas
@@ -113,7 +113,7 @@ export default function DashboardProfessor() {
                   className="flex items-center justify-between gap-3 rounded-md border border-border bg-bg-elevated px-5 py-3"
                 >
                   <div>
-                    <p className="text-sm font-medium text-fg-primary">{s.turma.nome}</p>
+                    <p className="text-sm font-medium text-fg-primary">{s.disciplina.nome}</p>
                     <p className="font-mono text-xs text-fg-muted">
                       #{s.id} · {new Date(s.dataAbertura).toLocaleString('pt-BR')}
                     </p>
