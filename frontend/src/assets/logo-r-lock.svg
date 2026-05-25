@@ -1,0 +1,41 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="RUTh">
+  <defs>
+    <linearGradient id="rlock-border" x1="40" y1="40" x2="472" y2="472" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7F00FF"/>
+      <stop offset="1" stop-color="#FF2400"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Moldura: borda em degradê violeta -> escarlate -->
+  <rect x="0" y="0" width="512" height="512" rx="116" fill="url(#rlock-border)"/>
+  <!-- Interior preto profundo -->
+  <rect x="18" y="18" width="476" height="476" rx="100" fill="#0A0A0F"/>
+
+  <!-- R geométrico branco, compacto e mais à esquerda (perna curta, longe do canto) -->
+  <path
+    d="M134 120
+       H268
+       a76 76 0 0 1 76 76
+       v6
+       a76 76 0 0 1 -50 72
+       l44 78
+       h-68
+       l-40 -72
+       H194
+       v72
+       H134
+       Z
+       M194 172
+       v72
+       h74
+       a26 26 0 0 0 26 -26
+       v-20
+       a26 26 0 0 0 -26 -26
+       Z"
+    fill="#FFFFFF"
+    fill-rule="evenodd"
+  />
+
+  <!-- Ponto isolado no canto inferior direito, bem separado do R -->
+  <circle cx="406" cy="406" r="22" fill="#FFFFFF"/>
+</svg>

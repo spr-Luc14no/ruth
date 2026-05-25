@@ -11,19 +11,17 @@ import { Select } from '@/components/ui/Select';
 import { Table } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { turmasApi, relatoriosApi, extractErrorMessage } from '@/services/api';
-import type { RelatorioTurma, TurmaResumo } from '@/types';
+import {
+  turmasApi,
+  disciplinasApi,
+  relatoriosApi,
+  extractErrorMessage,
+} from '@/services/api';
+import type { RelatorioDisciplina } from '@/types';
 import { cn } from '@/lib/cn';
 
-/**
- * Wrapper que escolhe o shell conforme o perfil:
- * - Admin vê com sidebar de admin
- * - Professor vê com só DashboardHeader + link de voltar pro painel
- */
 function PageShell({ tipo, children }: { tipo: 'A' | 'P' | 'U' | undefined; children: ReactNode }) {
-  if (tipo === 'A') {
-    return <AdminShell>{children}</AdminShell>;
-  }
+  if (tipo === 'A') return <AdminShell>{children}</AdminShell>;
   return (
     <div className="min-h-screen bg-bg-base">
       <DashboardHeader />
@@ -41,173 +39,161 @@ function PageShell({ tipo, children }: { tipo: 'A' | 'P' | 'U' | undefined; chil
   );
 }
 
+interface OpcaoDisciplina {
+  id: number;
+  nome: string;
+  turmaNome: string;
+}
+
 export default function Relatorios() {
   const { user } = useAuth();
+  const tipo = user?.tipo;
 
-  const [turmas, setTurmas] = useState<TurmaResumo[]>([]);
-  const [loadingTurmas, setLoadingTurmas] = useState(true);
-
-  const [turmaId, setTurmaId] = useState<number | ''>('');
+  const [disciplinas, setDisciplinas] = useState<OpcaoDisciplina[]>([]);
+  const [disciplinaId, setDisciplinaId] = useState<number | ''>('');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
 
-  const [relatorio, setRelatorio] = useState<RelatorioTurma | null>(null);
-  const [gerando, setGerando] = useState(false);
-  const [exportando, setExportando] = useState<'csv' | 'pdf' | null>(null);
+  const [relatorio, setRelatorio] = useState<RelatorioDisciplina | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [baixando, setBaixando] = useState<'csv' | 'pdf' | null>(null);
 
+  // Carrega disciplinas conforme perfil
   useEffect(() => {
-    turmasApi
-      .listar()
-      .then((t) => {
-        setTurmas(t);
-        if (t.length === 1) setTurmaId(t[0].id);
-      })
-      .catch((err) => toast.error(extractErrorMessage(err)))
-      .finally(() => setLoadingTurmas(false));
-  }, []);
+    async function carregar() {
+      try {
+        if (tipo === 'P') {
+          const minhas = await disciplinasApi.minhas();
+          setDisciplinas(
+            minhas.map((d) => ({ id: d.id, nome: d.nome, turmaNome: d.turma.nome })),
+          );
+        } else if (tipo === 'A') {
+          const turmas = await turmasApi.listar();
+          const lista: OpcaoDisciplina[] = [];
+          turmas.forEach((t) =>
+            t.disciplinas.forEach((d) =>
+              lista.push({ id: d.id, nome: d.nome, turmaNome: t.nome }),
+            ),
+          );
+          setDisciplinas(lista);
+        }
+      } catch (err) {
+        toast.error(extractErrorMessage(err));
+      }
+    }
+    if (tipo) carregar();
+  }, [tipo]);
+
+  const filtro = {
+    ...(dataInicio ? { dataInicio } : {}),
+    ...(dataFim ? { dataFim } : {}),
+  };
 
   async function gerar() {
-    if (!turmaId) {
-      toast.error('Escolha uma turma.');
+    if (!disciplinaId) {
+      toast.error('Escolha uma disciplina.');
       return;
     }
-    setGerando(true);
+    setLoading(true);
     try {
-      const r = await relatoriosApi.resumo(turmaId, {
-        dataInicio: dataInicio || undefined,
-        dataFim: dataFim || undefined,
-      });
-      setRelatorio(r);
+      setRelatorio(await relatoriosApi.resumo(Number(disciplinaId), filtro));
     } catch (err) {
       toast.error(extractErrorMessage(err));
     } finally {
-      setGerando(false);
+      setLoading(false);
     }
   }
 
-  async function exportar(formato: 'csv' | 'pdf') {
-    if (!turmaId || !relatorio) return;
-    setExportando(formato);
+  async function baixar(formato: 'csv' | 'pdf') {
+    if (!disciplinaId) return;
+    setBaixando(formato);
     try {
-      const filtro = {
-        dataInicio: dataInicio || undefined,
-        dataFim: dataFim || undefined,
-      };
-      if (formato === 'csv') await relatoriosApi.downloadCSV(turmaId, filtro);
-      else await relatoriosApi.downloadPDF(turmaId, filtro);
-      toast.success(`${formato.toUpperCase()} baixado.`);
+      if (formato === 'csv') await relatoriosApi.downloadCSV(Number(disciplinaId), filtro);
+      else await relatoriosApi.downloadPDF(Number(disciplinaId), filtro);
     } catch (err) {
       toast.error(extractErrorMessage(err));
     } finally {
-      setExportando(null);
+      setBaixando(null);
     }
   }
 
   return (
-    <PageShell tipo={user?.tipo}>
+    <PageShell tipo={tipo}>
       <header className="mb-8 animate-slide-up">
-        {user?.tipo === 'A' && <p className="section-number mb-3">administração — 03</p>}
-        <h1 className="text-display-lg text-fg-primary">Relatórios de Presença</h1>
+        <p className="section-number mb-3">relatórios</p>
+        <h1 className="text-display-lg text-fg-primary">Presença por disciplina</h1>
         <p className="mt-1 text-sm text-fg-muted">
-          {user?.tipo === 'P'
-            ? 'Consolidação de presença das suas turmas, com filtros de período e exportação em CSV e PDF.'
-            : 'Consolidação de presença por turma, com filtros de período e exportação em CSV e PDF.'}
+          Consolida as sessões encerradas e marca aprovação por presença mínima.
         </p>
       </header>
 
-      <section className="card-vault mb-6 p-6">
-        <p className="section-number mb-4">filtros — 01</p>
-        <div className="grid gap-4 sm:grid-cols-[1fr_220px_220px_auto]">
+      {/* Filtros */}
+      <div className="card-vault mb-6 p-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Select
-            label="Turma"
+            label="Disciplina"
             marker="01"
-            value={turmaId}
-            onChange={(e) => setTurmaId(e.target.value ? Number(e.target.value) : '')}
-            options={turmas.map((t) => ({ value: t.id, label: `${t.nome} · ${t.disciplina}` }))}
-            placeholder={loadingTurmas ? 'Carregando…' : 'Escolha uma turma'}
-            disabled={loadingTurmas || gerando}
-            required
+            value={disciplinaId}
+            onChange={(e) => setDisciplinaId(e.target.value ? Number(e.target.value) : '')}
+            options={disciplinas.map((d) => ({ value: d.id, label: `${d.nome} · ${d.turmaNome}` }))}
+            placeholder="Escolha uma disciplina"
           />
           <Input
-            label="Data início"
+            label="De"
             marker="02"
             type="date"
             value={dataInicio}
             onChange={(e) => setDataInicio(e.target.value)}
-            disabled={gerando}
           />
           <Input
-            label="Data fim"
+            label="Até"
             marker="03"
             type="date"
             value={dataFim}
             onChange={(e) => setDataFim(e.target.value)}
-            disabled={gerando}
           />
           <div className="flex items-end">
-            <Button onClick={gerar} loading={gerando} disabled={!turmaId}>
-              <Search size={14} />
+            <Button onClick={gerar} loading={loading} disabled={!disciplinaId} className="w-full">
+              <Search size={16} />
               Gerar
             </Button>
           </div>
         </div>
-      </section>
+      </div>
 
+      {/* Resultado */}
       {!relatorio ? (
         <EmptyState
           icon={BarChart3}
           title="Nenhum relatório gerado"
-          description="Escolha uma turma e período acima, depois clique em 'Gerar'."
+          description="Escolha uma disciplina e clique em Gerar para consolidar a presença."
         />
       ) : (
-        <>
-          <section className="mb-6 grid gap-3 sm:grid-cols-3">
-            <div className="card-vault p-4">
-              <p className="section-number">sessões consideradas</p>
-              <p className="display mt-1 text-3xl tabular-nums text-fg-primary">
-                {relatorio.totalSessoesConsideradas}
-              </p>
-            </div>
-            <div className="card-vault p-4">
-              <p className="section-number">alunos analisados</p>
-              <p className="display mt-1 text-3xl tabular-nums text-fg-primary">
-                {relatorio.linhas.length}
-              </p>
-            </div>
-            <div className="card-vault p-4">
-              <p className="section-number">presença média</p>
-              <p className="display mt-1 text-3xl tabular-nums text-rgb">
-                {relatorio.linhas.length === 0
-                  ? '—'
-                  : Math.round(
-                      relatorio.linhas.reduce((acc, l) => acc + l.percentualPresenca, 0) /
-                        relatorio.linhas.length,
-                    ) + '%'}
-              </p>
-            </div>
-          </section>
-
+        <div className="animate-fade-in">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="display text-xl text-fg-primary">{relatorio.turma.nome}</p>
+              <h2 className="display text-2xl text-fg-primary">{relatorio.disciplina.nome}</h2>
               <p className="text-sm text-fg-muted">
-                {relatorio.turma.disciplina} · período {relatorio.turma.periodo}
+                {relatorio.disciplina.turma.nome} · {relatorio.disciplina.turma.periodo} ·{' '}
+                {relatorio.totalSessoesConsideradas} sessões · aprovação ≥{' '}
+                {relatorio.presencaMinima}%
               </p>
             </div>
             <div className="flex gap-2">
               <Button
                 variant="secondary"
-                onClick={() => exportar('csv')}
-                loading={exportando === 'csv'}
-                disabled={exportando !== null}
+                size="sm"
+                onClick={() => baixar('csv')}
+                loading={baixando === 'csv'}
               >
                 <FileSpreadsheet size={14} />
                 CSV
               </Button>
               <Button
-                onClick={() => exportar('pdf')}
-                loading={exportando === 'pdf'}
-                disabled={exportando !== null}
+                variant="secondary"
+                size="sm"
+                onClick={() => baixar('pdf')}
+                loading={baixando === 'pdf'}
               >
                 <FileText size={14} />
                 PDF
@@ -215,88 +201,54 @@ export default function Relatorios() {
             </div>
           </div>
 
-          <Table
-            columns={[
-              {
-                header: 'aluno',
-                cell: (l) => (
-                  <div>
-                    <p className="font-medium text-fg-primary">{l.alunoNome}</p>
-                    {l.matricula && (
-                      <p className="font-mono text-[11px] text-fg-muted">mat. {l.matricula}</p>
-                    )}
-                  </div>
-                ),
-              },
-              {
-                header: 'confirmadas',
-                align: 'center',
-                cell: (l) => (
-                  <span className="font-mono tabular-nums text-fg-primary">
-                    {l.presencasConfirmadas}
-                  </span>
-                ),
-              },
-              {
-                header: 'tolerância',
-                align: 'center',
-                cell: (l) => (
-                  <span className="font-mono tabular-nums text-fg-secondary">
-                    {l.presencasPendentes}
-                  </span>
-                ),
-              },
-              {
-                header: 'faltas',
-                align: 'center',
-                cell: (l) => (
-                  <span className="font-mono tabular-nums text-fg-secondary">{l.faltas}</span>
-                ),
-              },
-              {
-                header: '% presença',
-                align: 'right',
-                cell: (l) => (
-                  <Badge
-                    variant={
-                      l.percentualPresenca >= 75
-                        ? 'success'
-                        : l.percentualPresenca >= 50
-                          ? 'warning'
-                          : 'danger'
-                    }
-                  >
-                    {l.percentualPresenca}%
-                  </Badge>
-                ),
-              },
-              {
-                header: 'última presença',
-                align: 'right',
-                cell: (l) => (
-                  <span
-                    className={cn(
-                      'font-mono text-xs',
-                      l.ultimaPresenca ? 'text-fg-secondary' : 'text-fg-muted',
-                    )}
-                  >
-                    {l.ultimaPresenca
-                      ? new Date(l.ultimaPresenca).toLocaleDateString('pt-BR')
-                      : '—'}
-                  </span>
-                ),
-              },
-            ]}
-            data={relatorio.linhas}
-            rowKey={(l) => l.alunoId}
-            empty={
-              <EmptyState
-                title="Sem matrículas"
-                description="Não há alunos matriculados nesta turma."
-              />
-            }
-          />
-        </>
+          {relatorio.linhas.length === 0 ? (
+            <div className="card-vault p-8 text-center text-sm text-fg-muted">
+              Nenhum aluno matriculado nesta turma.
+            </div>
+          ) : (
+            <Table
+              data={relatorio.linhas}
+              rowKey={(l) => l.alunoId}
+              columns={[
+                { header: 'Aluno', cell: (l) => <span className="font-medium text-fg-primary">{l.alunoNome}</span> },
+                { header: 'Matrícula', cell: (l) => <span className="font-mono text-xs text-fg-muted">{l.matricula ?? '—'}</span> },
+                {
+                  header: 'Presenças',
+                  align: 'center',
+                  cell: (l) => `${l.presencasConfirmadas + l.presencasPendentes}/${l.totalSessoes}`,
+                },
+                { header: 'Faltas', align: 'center', cell: (l) => <span className="text-fg-secondary">{l.faltas}</span> },
+                {
+                  header: '%',
+                  align: 'center',
+                  cell: (l) => (
+                    <span
+                      className={cn(
+                        'font-mono font-semibold',
+                        l.percentualPresenca >= 75
+                          ? 'text-success-400'
+                          : l.percentualPresenca >= 50
+                            ? 'text-warning-400'
+                            : 'text-accent-400',
+                      )}
+                    >
+                      {l.percentualPresenca}%
+                    </span>
+                  ),
+                },
+                {
+                  header: 'Situação',
+                  align: 'center',
+                  cell: (l) => (
+                    <Badge variant={l.aprovado ? 'success' : 'danger'}>
+                      {l.aprovado ? 'Aprovado' : 'Reprovado'}
+                    </Badge>
+                  ),
+                },
+              ]}
+            />
+          )}
+        </div>
       )}
     </PageShell>
   );

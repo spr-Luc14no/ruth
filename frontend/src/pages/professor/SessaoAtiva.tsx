@@ -134,7 +134,7 @@ export default function SessaoAtiva() {
     );
   }
 
-  const totalMatriculados = sessao.turma._count.matriculas;
+  const totalMatriculados = sessao.disciplina.turma._count.matriculas;
   const totalPresentes = sessao.presencas.filter((p) => p.status === 'CONFIRMADO').length;
   const totalPendentes = sessao.presencas.filter((p) => p.status === 'PENDENTE').length;
   const isEncerrada = sessao.status !== 'ABERTA';
@@ -157,8 +157,8 @@ export default function SessaoAtiva() {
         <header className="mb-10 flex flex-wrap items-end justify-between gap-4 animate-slide-up">
           <div>
             <p className="section-number mb-3">sessão #{sessao.id} · ao vivo</p>
-            <h1 className="display text-5xl tracking-tightest text-fg-primary">{sessao.turma.nome}</h1>
-            <p className="mt-1 text-sm text-fg-secondary">{sessao.turma.disciplina}</p>
+            <h1 className="display text-5xl tracking-tightest text-fg-primary">{sessao.disciplina.nome}</h1>
+            <p className="mt-1 text-sm text-fg-secondary">{sessao.disciplina.turma.nome}</p>
           </div>
           <div className="flex gap-2">
             {!isEncerrada && (

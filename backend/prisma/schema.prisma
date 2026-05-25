@@ -1,6 +1,5 @@
-// RUTh — Schema do banco de dados
-// Espelha o Diagrama de Classes Persistentes (Figura 8 da documentação)
-// Provider: MySQL (compatível com TiDB Cloud em produção)
+// RUTh — Schema do banco de dados (PR7: remodelagem com Disciplina)
+// Provider: MySQL (compatível com TiDB Cloud)
 
 generator client {
   provider = "prisma-client-js"
@@ -9,22 +8,17 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
-  // TiDB Cloud requer SSL — Prisma já trata via URL com ?sslaccept=strict
 }
 
-// ============================================
-// ENUMS
-// ============================================
-
 enum TipoUsuario {
-  A // Admin
-  P // Professor
-  U // Aluno (User)
+  A
+  P
+  U
 }
 
 enum StatusUsuario {
-  A // Ativo
-  B // Bloqueado
+  A
+  B
 }
 
 enum StatusSessao {
@@ -47,56 +41,62 @@ enum StatusPresenca {
 
 enum TipoPergunta {
   MULTIPLA
+  MULTIPLA_MULTI
   VF
   ENQUETE
   TEXTO
+  IMAGEM
 }
-
-// ============================================
-// USUÁRIO (Admin / Professor / Aluno)
-// ============================================
 
 model Usuario {
   id        Int           @id @default(autoincrement())
   nome      String        @db.VarChar(100)
   email     String        @unique @db.VarChar(100)
   login     String        @unique @db.VarChar(50)
-  senha     String        @db.VarChar(255) // hash bcrypt
+  senha     String        @db.VarChar(255)
   tipo      TipoUsuario
   status    StatusUsuario @default(A)
-  matricula String?       @unique @db.VarChar(50) // só pra Aluno
+  matricula String?       @unique @db.VarChar(50)
   criadoEm  DateTime      @default(now())
 
-  // Relacionamentos
-  turmasMinistradas Turma[]         @relation("ProfessorTurma")
-  matriculas        Matricula[]
-  sessoesAbertas    SessaoChamada[] @relation("ProfessorSessao")
-  presencas         Presenca[]
-  respostas         Resposta[]
-  logs              AuditoriaLog[]
+  disciplinasMinistradas Disciplina[]    @relation("ProfessorDisciplina")
+  matriculas             Matricula[]
+  sessoesAbertas         SessaoChamada[] @relation("ProfessorSessao")
+  presencas              Presenca[]
+  respostas              Resposta[]
+  perguntasBanco         PerguntaBanco[] @relation("AutorPerguntaBanco")
+  logs                   AuditoriaLog[]
 
   @@index([tipo, status])
 }
 
-// ============================================
-// TURMA
-// ============================================
-
 model Turma {
+  id      Int    @id @default(autoincrement())
+  nome    String @db.VarChar(100)
+  periodo String @db.VarChar(50)
+
+  disciplinas Disciplina[]
+  matriculas  Matricula[]
+}
+
+model Disciplina {
   id          Int    @id @default(autoincrement())
   nome        String @db.VarChar(100)
-  periodo     String @db.VarChar(50)
-  disciplina  String @db.VarChar(100)
+  turmaId     Int
   professorId Int
 
-  professor  Usuario         @relation("ProfessorTurma", fields: [professorId], references: [id])
-  matriculas Matricula[]
-  sessoes    SessaoChamada[]
+  toleranciaAtrasoMin Int?
+  janelaPadraoMin     Int?
 
+  turma          Turma           @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+  professor      Usuario         @relation("ProfessorDisciplina", fields: [professorId], references: [id])
+  sessoes        SessaoChamada[]
+  perguntasBanco PerguntaBanco[]
+
+  @@index([turmaId])
   @@index([professorId])
 }
 
-// Tabela de junção N:N Aluno <-> Turma
 model Matricula {
   alunoId Int
   turmaId Int
@@ -107,63 +107,53 @@ model Matricula {
   @@id([alunoId, turmaId])
 }
 
-// ============================================
-// SESSÃO DE CHAMADA
-// ============================================
-
 model SessaoChamada {
-  id                Int          @id @default(autoincrement())
-  turmaId           Int
-  professorId       Int
-  dataAbertura      DateTime     @default(now())
-  dataEncerramento  DateTime?
-  janelaMin         Int          @default(10) // minutos
-  status            StatusSessao @default(ABERTA)
-  codigo            String       @unique @db.VarChar(10)
+  id               Int          @id @default(autoincrement())
+  disciplinaId     Int
+  professorId      Int
+  dataAbertura     DateTime     @default(now())
+  dataEncerramento DateTime?
+  janelaMin        Int          @default(10)
+  status           StatusSessao @default(ABERTA)
+  codigo           String       @unique @db.VarChar(10)
 
-  turma     Turma      @relation(fields: [turmaId], references: [id])
-  professor Usuario    @relation("ProfessorSessao", fields: [professorId], references: [id])
-  presencas Presenca[]
-  perguntas Pergunta[]
+  disciplina Disciplina @relation(fields: [disciplinaId], references: [id])
+  professor  Usuario    @relation("ProfessorSessao", fields: [professorId], references: [id])
+  presencas  Presenca[]
+  perguntas  Pergunta[]
 
-  @@index([turmaId, status])
+  @@index([disciplinaId, status])
   @@index([codigo])
 }
 
-// ============================================
-// PRESENÇA
-// ============================================
-
 model Presenca {
-  id         Int               @id @default(autoincrement())
-  sessaoId   Int
-  alunoId    Int
-  marcadoEm  DateTime          @default(now())
-  validacao  ValidacaoPresenca @default(PENDENTE)
-  atrasoMin  Int               @default(0)
-  status     StatusPresenca    @default(PENDENTE)
-  ip         String?           @db.VarChar(50)
-  dispositivo String?          @db.VarChar(100)
+  id          Int               @id @default(autoincrement())
+  sessaoId    Int
+  alunoId     Int
+  marcadoEm   DateTime          @default(now())
+  validacao   ValidacaoPresenca @default(PENDENTE)
+  atrasoMin   Int               @default(0)
+  status      StatusPresenca    @default(PENDENTE)
+  ip          String?           @db.VarChar(50)
+  dispositivo String?           @db.VarChar(100)
 
   sessao SessaoChamada @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
   aluno  Usuario       @relation(fields: [alunoId], references: [id])
 
-  // RN10: aluno só registra 1x por sessão
   @@unique([sessaoId, alunoId])
   @@index([alunoId])
 }
 
-// ============================================
-// PERGUNTA / INTERAÇÃO
-// ============================================
-
 model Pergunta {
-  id        Int          @id @default(autoincrement())
-  sessaoId  Int
-  tipo      TipoPergunta
-  enunciado String       @db.VarChar(255)
-  ativa     Boolean      @default(true)
-  criadaEm  DateTime     @default(now())
+  id          Int          @id @default(autoincrement())
+  sessaoId    Int
+  tipo        TipoPergunta
+  enunciado   String       @db.VarChar(500)
+  imagemUrl   String?      @db.VarChar(500)
+  tempoLimite Int?
+  ativa       Boolean      @default(true)
+  criadaEm    DateTime     @default(now())
+  encerradaEm DateTime?
 
   sessao    SessaoChamada   @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
   opcoes    OpcaoPergunta[]
@@ -187,34 +177,53 @@ model Resposta {
   perguntaId   Int
   alunoId      Int
   opcaoId      Int?
-  textoLivre   String?  @db.VarChar(500) // para perguntas tipo TEXTO
+  textoLivre   String?  @db.VarChar(500)
   respondidoEm DateTime @default(now())
+  tempoRespSeg Int?
   correta      Boolean  @default(false)
 
   pergunta Pergunta       @relation(fields: [perguntaId], references: [id], onDelete: Cascade)
   aluno    Usuario        @relation(fields: [alunoId], references: [id])
   opcao    OpcaoPergunta? @relation(fields: [opcaoId], references: [id])
 
-  // Aluno só responde uma pergunta uma vez
   @@unique([perguntaId, alunoId])
 }
 
-// ============================================
-// PARÂMETROS DO SISTEMA
-// ============================================
+model PerguntaBanco {
+  id           Int          @id @default(autoincrement())
+  professorId  Int
+  disciplinaId Int?
+  tipo         TipoPergunta
+  enunciado    String       @db.VarChar(500)
+  imagemUrl    String?      @db.VarChar(500)
+  tempoLimite  Int?
+  criadaEm     DateTime     @default(now())
+
+  professor  Usuario      @relation("AutorPerguntaBanco", fields: [professorId], references: [id], onDelete: Cascade)
+  disciplina Disciplina?  @relation(fields: [disciplinaId], references: [id], onDelete: SetNull)
+  opcoes     OpcaoBanco[]
+
+  @@index([professorId])
+  @@index([disciplinaId])
+}
+
+model OpcaoBanco {
+  id         Int     @id @default(autoincrement())
+  perguntaId Int
+  descricao  String  @db.VarChar(255)
+  correta    Boolean @default(false)
+
+  pergunta PerguntaBanco @relation(fields: [perguntaId], references: [id], onDelete: Cascade)
+}
 
 model Parametro {
   id        Int     @id @default(autoincrement())
   chave     String  @unique @db.VarChar(50)
   descricao String  @db.VarChar(100)
   valor     String  @db.VarChar(50)
-  tipo      String  @db.VarChar(30) // MIN, P, INT, etc.
+  tipo      String  @db.VarChar(30)
   ativo     Boolean @default(true)
 }
-
-// ============================================
-// AUDITORIA
-// ============================================
 
 model AuditoriaLog {
   id         Int      @id @default(autoincrement())

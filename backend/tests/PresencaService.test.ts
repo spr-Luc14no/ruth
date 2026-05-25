@@ -31,10 +31,10 @@ import { BusinessRuleError, AppError, NotFoundError } from '../src/utils/errors'
 const agora = new Date();
 const sessaoAbertaRecente = {
   id: 100,
-  turmaId: 1,
   status: 'ABERTA' as const,
-  dataAbertura: new Date(agora.getTime() - 2 * 60_000), // 2 minutos atrás
+  dataAbertura: new Date(agora.getTime() - 2 * 60_000),
   janelaMin: 10,
+  disciplina: { turmaId: 1, toleranciaAtrasoMin: null },
 };
 
 const matriculaFake = { alunoId: 20, turmaId: 1 };

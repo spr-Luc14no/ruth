@@ -8,7 +8,7 @@ import { emitToSessao } from '../sockets';
 // ============ Schemas ============
 
 export const criarSessaoSchema = z.object({
-  turmaId: z.coerce.number().int().positive(),
+  disciplinaId: z.coerce.number().int().positive(),
   janelaMin: z.coerce.number().int().positive().max(180).optional(),
 });
 
@@ -29,9 +29,9 @@ export const codigoParam = z.object({
 export class SessaoController {
   static async criar(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { turmaId, janelaMin } = req.body as z.infer<typeof criarSessaoSchema>;
+      const { disciplinaId, janelaMin } = req.body as z.infer<typeof criarSessaoSchema>;
       const sessao = await SessaoService.criar({
-        turmaId,
+        disciplinaId,
         janelaMin,
         professorId: req.user!.userId,
       });
