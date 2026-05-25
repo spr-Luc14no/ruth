@@ -1,54 +1,41 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="RUTh">
   <defs>
-    <!-- Split diagonal: violeta no topo-esquerda, escarlate embaixo-direita -->
-    <linearGradient id="rlock-split" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+    <linearGradient id="rlock-border" x1="40" y1="40" x2="472" y2="472" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#7F00FF"/>
-      <stop offset="0.5" stop-color="#7F00FF"/>
-      <stop offset="0.5" stop-color="#FF2400"/>
       <stop offset="1" stop-color="#FF2400"/>
     </linearGradient>
-    <!-- Brilho neon na linha de divisão -->
-    <linearGradient id="rlock-shine" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
-      <stop offset="0.46" stop-color="#FF2DCB" stop-opacity="0"/>
-      <stop offset="0.5" stop-color="#FF6AD5" stop-opacity="0.9"/>
-      <stop offset="0.54" stop-color="#FF2DCB" stop-opacity="0"/>
-    </linearGradient>
-    <clipPath id="rlock-rounded">
-      <rect x="0" y="0" width="512" height="512" rx="116" ry="116"/>
-    </clipPath>
   </defs>
 
-  <!-- Fundo com split -->
-  <g clip-path="url(#rlock-rounded)">
-    <rect x="0" y="0" width="512" height="512" fill="url(#rlock-split)"/>
-    <rect x="0" y="0" width="512" height="512" fill="url(#rlock-shine)"/>
-  </g>
+  <!-- Moldura: borda em degradê violeta -> escarlate -->
+  <rect x="0" y="0" width="512" height="512" rx="116" fill="url(#rlock-border)"/>
+  <!-- Interior preto profundo -->
+  <rect x="18" y="18" width="476" height="476" rx="100" fill="#0A0A0F"/>
 
-  <!-- R geométrico branco -->
+  <!-- R geométrico branco, compacto e mais à esquerda (perna curta, longe do canto) -->
   <path
-    d="M150 110
-       H300
-       a86 86 0 0 1 86 86
-       v8
-       a86 86 0 0 1 -58 81
-       l68 117
-       h-78
-       l-62 -108
-       H214
-       v108
-       H150
+    d="M134 120
+       H268
+       a76 76 0 0 1 76 76
+       v6
+       a76 76 0 0 1 -50 72
+       l44 78
+       h-68
+       l-40 -72
+       H194
+       v72
+       H134
        Z
-       M214 168
-       v90
-       h78
-       a30 30 0 0 0 30 -30
-       v-30
-       a30 30 0 0 0 -30 -30
+       M194 172
+       v72
+       h74
+       a26 26 0 0 0 26 -26
+       v-20
+       a26 26 0 0 0 -26 -26
        Z"
     fill="#FFFFFF"
     fill-rule="evenodd"
   />
 
-  <!-- Dot / "ping" do aRe U There? -->
-  <circle cx="404" cy="404" r="24" fill="#FFFFFF"/>
+  <!-- Ponto isolado no canto inferior direito, bem separado do R -->
+  <circle cx="406" cy="406" r="22" fill="#FFFFFF"/>
 </svg>
