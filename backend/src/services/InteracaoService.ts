@@ -116,7 +116,7 @@ export class InteracaoService {
     const pergunta = await prisma.pergunta.findUnique({
       where: { id: input.perguntaId },
       include: {
-        sessao: { select: { id: true, status: true, turmaId: true } },
+        sessao: { select: { id: true, status: true } },
         opcoes: true,
       },
     });
