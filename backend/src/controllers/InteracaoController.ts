@@ -124,7 +124,7 @@ export class InteracaoController {
 
 // Helper interno
 async function getSessaoIdDaPergunta(perguntaId: number): Promise<number | null> {
-  const { prisma } = await import('../config/prisma');
+  const { prisma } = await import('../config/prisma.js');
   const p = await prisma.pergunta.findUnique({
     where: { id: perguntaId },
     select: { sessaoId: true },
